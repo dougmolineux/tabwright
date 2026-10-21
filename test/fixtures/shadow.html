@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Shadow DOM</title></head>
+<body>
+  <h1>Shadow DOM</h1>
+  <open-widget></open-widget>
+  <closed-widget></closed-widget>
+  <p id="clicked"></p>
+  <script>
+    customElements.define("open-widget", class extends HTMLElement {
+      connectedCallback() {
+        const r = this.attachShadow({ mode: "open" });
+        r.innerHTML = '<label for="q">Search inside shadow</label><input id="q"><button id="go">Go</button>';
+        r.getElementById("go").addEventListener("click", () => (document.getElementById("clicked").textContent = "open clicked: " + r.getElementById("q").value));
+      }
+    });
+    customElements.define("closed-widget", class extends HTMLElement {
+      connectedCallback() {
+        const r = this.attachShadow({ mode: "closed" });
+        r.innerHTML = '<button>Hidden inside closed root</button>';
+      }
+    });
+  </script>
+</body></html>

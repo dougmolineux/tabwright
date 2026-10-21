@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Uploads</title>
+<style>#zone{border:2px dashed #999;padding:32px;text-align:center;margin:16px 0}</style></head>
+<body>
+  <h1>Uploads</h1>
+  <p><label for="f">Attach a file</label> <input id="f" type="file" accept=".pdf,.txt"></p>
+  <p id="input-result"></p>
+  <div id="zone" role="button" tabindex="0" aria-label="Drop your resume here">Drop your resume here</div>
+  <p id="drop-result"></p>
+  <script>
+    document.getElementById("f").addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      document.getElementById("input-result").textContent = f ? `input: ${f.name} ${f.size}` : "";
+    });
+    const z = document.getElementById("zone");
+    z.addEventListener("dragover", (e) => e.preventDefault());
+    z.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const f = e.dataTransfer.files[0];
+      document.getElementById("drop-result").textContent = `dropped: ${f.name} ${f.size}`;
+    });
+  </script>
+</body></html>

@@ -1,0 +1,8 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Frames</title></head>
+<body>
+  <h1>Frames</h1>
+  <iframe title="Same origin" src="/plain-form.html" width="600" height="300"></iframe>
+  <iframe title="Cross origin" id="xo" width="600" height="300"></iframe>
+  <script>document.getElementById("xo").src = "http://localhost:" + location.port + "/password.html";</script>
+</body></html>

@@ -1,0 +1,20 @@
+{
+  "firstName": "Jane",
+  "preferredName": "Jane",
+  "lastName": "Doe",
+  "email": "jane.doe@example.com",
+  "phone": "(555) 010-0199",
+  "city": "Springfield",
+  "state": "IL",
+  "country": "United States",
+  "links": { "github": "https://github.com/janedoe", "linkedin": null },
+  "resumePath": "~/Documents/resume.pdf",
+  "answers": {
+    "yearsExperience": 17,
+    "backend5PlusYears": "Yes",
+    "workAuthorizedNoSponsorship": null,
+    "willingToRelocate": null,
+    "willingToTravelForOnsite": "No",
+    "salaryExpectation": null
+  }
+}

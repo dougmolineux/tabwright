@@ -1,0 +1,39 @@
+{
+  "name": "firefox-claude-addon",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "extension",
+    "host",
+    "mcp-server"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "npm run build && vitest run test/integration",
+    "fixtures": "node test/fixtures/serve.mjs",
+    "ext:run": "web-ext run --source-dir extension",
+    "ext:lint": "web-ext lint --source-dir extension",
+    "ext:sign": "web-ext sign --source-dir extension --channel=unlisted",
+    "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts",
+    "pretest": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.2",
+    "geckodriver": "^6.1.1",
+    "jsdom": "^26.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-select": "^5.10.2",
+    "selenium-webdriver": "^4.50.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "license": "MIT",
+  "description": "Lets Claude Code read and operate the Firefox tabs you allow, with your approval for anything consequential."
+}

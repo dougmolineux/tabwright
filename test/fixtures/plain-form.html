@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Plain form</title></head>
+<body>
+  <h1>Plain form</h1>
+  <form action="/submit" method="post" aria-label="Contact">
+    <p><label for="fname">First name</label> <input id="fname" name="fname" required></p>
+    <p><label>Email <input name="email" type="email" required></label></p>
+    <p><label for="size">Size</label>
+      <select id="size" name="size"><option value="">Choose…</option><option value="s">Small</option><option value="l">Large</option></select></p>
+    <fieldset><legend>Contact me by</legend>
+      <label><input type="radio" name="via" value="email"> Email</label>
+      <label><input type="radio" name="via" value="phone"> Phone</label></fieldset>
+    <p><label><input type="checkbox" name="news"> Send me news</label></p>
+    <p><label for="msg">Message</label><textarea id="msg" name="msg"></textarea></p>
+    <p><button type="submit">Send message</button> <button type="button" id="other">Preview</button></p>
+  </form>
+  <p><a href="/plain-form.html?page=2">Next page</a></p>
+</body></html>

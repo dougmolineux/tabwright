@@ -1,0 +1,25 @@
+body { padding: 10px; display: grid; gap: 10px; align-content: start; min-height: 100vh; }
+.top { display: flex; align-items: center; gap: 8px; }
+.top #conn { flex: 1; font-size: 12px; }
+.actions { margin-top: 8px; }
+.spacer { flex: 1; }
+.notice { display: flex; flex-direction: column; gap: 8px; border-color: var(--accent); }
+.question { border-color: var(--accent); }
+.question p { margin: 0 0 8px; font-weight: 600; }
+.options { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.options:empty { display: none; }
+.log { margin: 6px 0 0; padding-left: 20px; max-height: 45vh; overflow-y: auto; font-size: 12px; }
+.log li { padding: 2px 0; word-break: break-word; }
+.log li.error { color: var(--danger); }
+.log li.warn { color: var(--warn); }
+.log li.approval, .log li.question { color: var(--accent); font-weight: 600; }
+.log li.assistant { color: var(--muted); font-style: italic; }
+.log li.engine, .log li.instruction { font-weight: 600; }
+#resultBody ul { margin: 4px 0 8px; padding-left: 18px; }
+#resultBody h4 { margin: 8px 0 0; font-size: 12px; }
+#resultBody .text { white-space: pre-wrap; }
+details summary { cursor: pointer; font-weight: 650; }
+details[open] summary { margin-bottom: 6px; }
+#profile { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 8px; }
+.small { font-size: 12px; }
+code { font-size: 11px; }

@@ -1,0 +1,8 @@
+node_modules/
+host/dist/
+mcp-server/dist/
+fm-helper/.build/
+test/fixtures/build/
+web-ext-artifacts/
+*.log
+.DS_Store

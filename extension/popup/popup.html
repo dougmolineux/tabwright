@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Firefox Bridge for Claude Code</title>
+  <link rel="stylesheet" href="../ui/ui.css">
+  <style>
+    body { width: 340px; padding: 12px; display: grid; gap: 12px; }
+    header { display: flex; align-items: center; gap: 8px; }
+    header strong { flex: 1; }
+    #status { font-size: 12px; }
+    #error { color: var(--danger); font-size: 12px; }
+    #siteHost { font-weight: 600; word-break: break-all; margin-bottom: 8px; }
+    #allowBtn { width: 100%; }
+    .controls button { flex: 1; }
+    #approvals li { cursor: pointer; }
+    footer { display: flex; gap: 12px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="dot" id="dot"></span>
+    <strong>Firefox Bridge for Claude Code</strong>
+    <span id="status" class="muted">…</span>
+  </header>
+  <div id="error" hidden></div>
+
+  <section class="card" id="site">
+    <h3>This tab</h3>
+    <div id="siteHost"></div>
+    <button id="allowBtn" class="primary" hidden>Allow Claude on this site</button>
+    <div id="siteNote" class="muted"></div>
+    <div id="shotNote" class="muted" hidden>Opening this popup also lets Claude take screenshots of this tab until it navigates.</div>
+  </section>
+
+  <section class="row controls">
+    <button id="connectBtn">Connect</button>
+    <button id="stopBtn" class="danger" title="Cancel everything, remove the indicator and disconnect">Stop</button>
+  </section>
+
+  <section class="card" id="approvalsSec" hidden>
+    <h3>Waiting for your approval</h3>
+    <ul class="plain" id="approvals"></ul>
+  </section>
+
+  <section class="card">
+    <h3>Allowed sites</h3>
+    <ul class="plain" id="sites"></ul>
+    <div id="noSites" class="muted">None yet. No site is allowed by default.</div>
+  </section>
+
+  <footer>
+    <a href="#" id="openSidebar">Open sidebar</a>
+    <a href="#" id="viewActivity">View activity</a>
+  </footer>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude</title>
+  <link rel="stylesheet" href="../ui/ui.css">
+  <link rel="stylesheet" href="sidebar.css">
+</head>
+<body>
+  <header class="top">
+    <span class="dot" id="dot"></span>
+    <span id="conn" class="muted">disconnected</span>
+    <button id="connectBtn" class="small">Connect</button>
+  </header>
+
+  <section id="allowBox" class="card notice" hidden>
+    <div id="allowText"></div>
+    <button id="allowBtn" class="primary small">Allow on this site</button>
+  </section>
+
+  <section class="card">
+    <textarea id="instruction" rows="4" placeholder="e.g. Fill out this application with my details. Leave work authorization and salary for me."></textarea>
+    <div class="row actions">
+      <button id="runBtn" class="primary">Run</button>
+      <button id="stopBtn" class="danger">Stop</button>
+      <span class="spacer"></span>
+      <span class="chip" id="engine" title="Engine in use">—</span>
+    </div>
+  </section>
+
+  <section id="questionBox" class="card question" hidden>
+    <h3>Claude is asking</h3>
+    <p id="questionText"></p>
+    <div id="questionOptions" class="options"></div>
+    <form id="answerForm" class="row">
+      <input type="text" id="answerInput" placeholder="Your answer" autocomplete="off">
+      <button type="submit" class="primary small">Send</button>
+    </form>
+  </section>
+
+  <section id="resultBox" class="card" hidden>
+    <h3 id="resultTitle">Summary</h3>
+    <div id="resultBody"></div>
+    <button id="continueBtn" class="small" hidden>Continue on-device</button>
+  </section>
+
+  <section class="card logcard">
+    <div class="row"><h3>Steps</h3><span class="spacer"></span><button id="clearLog" class="small">Clear</button></div>
+    <ol id="log" class="log"></ol>
+  </section>
+
+  <details class="card" id="profileBox">
+    <summary>Profile</summary>
+    <p class="muted small">Answers come from this file, never from guesses. <code>null</code> means "always ask me". EEO questions are never filled.</p>
+    <p class="muted small" id="profilePath"></p>
+    <textarea id="profile" rows="18" spellcheck="false"></textarea>
+    <div class="row">
+      <button id="profileSave" class="primary small">Save</button>
+      <button id="profileReload" class="small">Reload</button>
+      <span id="profileMsg" class="muted small"></span>
+    </div>
+  </details>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>
