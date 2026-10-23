@@ -7,21 +7,21 @@ PURGE=0
 
 case "$(uname)" in
   Darwin)
-    CONF="$HOME/Library/Application Support/ClaudeBridge"
-    NMH="$HOME/Library/Application Support/Mozilla/NativeMessagingHosts/claude_bridge.json"
-    LOGS="$HOME/Library/Logs/ClaudeBridge"
+    CONF="$HOME/Library/Application Support/Tabwright"
+    NMH="$HOME/Library/Application Support/Mozilla/NativeMessagingHosts/tabwright.json"
+    LOGS="$HOME/Library/Logs/Tabwright"
     ;;
   *)
-    CONF="${XDG_CONFIG_HOME:-$HOME/.config}/claude-bridge"
-    NMH="$HOME/.mozilla/native-messaging-hosts/claude_bridge.json"
-    LOGS="${XDG_STATE_HOME:-$HOME/.local/state}/claude-bridge"
+    CONF="${XDG_CONFIG_HOME:-$HOME/.config}/tabwright"
+    NMH="$HOME/.mozilla/native-messaging-hosts/tabwright.json"
+    LOGS="${XDG_STATE_HOME:-$HOME/.local/state}/tabwright"
     ;;
 esac
 
 rm -f "$NMH"
-rm -rf "$HOME/.local/share/claude-bridge"
+rm -rf "$HOME/.local/share/tabwright"
 if command -v claude >/dev/null 2>&1; then
-  claude mcp remove firefox -s user >/dev/null 2>&1 || true
+  claude mcp remove tabwright -s user >/dev/null 2>&1 || true
 fi
 if [ "$PURGE" -eq 1 ]; then
   rm -rf "$CONF" "$LOGS"

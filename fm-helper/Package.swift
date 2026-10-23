@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "claude-bridge-fm",
+    name: "tabwright-fm",
     platforms: [.macOS(.v26)],
     targets: [
-        .executableTarget(name: "claude-bridge-fm", path: "Sources/claude-bridge-fm")
+        .executableTarget(name: "tabwright-fm", path: "Sources/tabwright-fm")
     ]
 )

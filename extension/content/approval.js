@@ -1,7 +1,7 @@
 // In-page approval prompt (SPEC 8.2), drawn in a closed shadow root so the page can't read, fake or click it.
 // Only trusted (real user) clicks count. Also: target highlighting and "review this" annotations.
 (() => {
-  const CB = (globalThis.ClaudeBridge = globalThis.ClaudeBridge || {});
+  const CB = (globalThis.Tabwright = globalThis.Tabwright || {});
   if (CB.approvalLoaded) return;
   CB.approvalLoaded = true;
 
@@ -32,8 +32,8 @@
   CB.showApproval = ({ verb, target, host, timeoutMs }) => {
     if (active) active.finish("cancelled");
     return new Promise((resolve) => {
-      const hostEl = document.createElement("claude-bridge-approval");
-      hostEl.setAttribute("data-claude-bridge-ui", "");
+      const hostEl = document.createElement("tabwright-approval");
+      hostEl.setAttribute("data-tabwright-ui", "");
       const root = hostEl.attachShadow({ mode: "closed" });
       const style = document.createElement("style");
       style.textContent = STYLE;
@@ -125,8 +125,8 @@
   CB.annotate = (el, note) => {
     el.style.setProperty("outline", "2px dashed #e0a100", "important");
     el.style.setProperty("outline-offset", "2px", "important");
-    const tag = document.createElement("claude-bridge-note");
-    tag.setAttribute("data-claude-bridge-ui", "");
+    const tag = document.createElement("tabwright-note");
+    tag.setAttribute("data-tabwright-ui", "");
     const root = tag.attachShadow({ mode: "closed" });
     const span = document.createElement("span");
     span.textContent = note;

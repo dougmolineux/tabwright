@@ -1,4 +1,4 @@
-# Firefox Claude Add-on: Specification
+# Tabwright: Specification
 
 Status: Draft v0.1 (2026-10-06)
 Owner: Doug Molineux
@@ -75,18 +75,18 @@ Manifest V3. Firefox 128 or later is required (needed for `scripting.executeScri
 ```json
 {
   "manifest_version": 3,
-  "name": "Firefox Bridge for Claude Code",
+  "name": "Tabwright",
   "version": "0.1.0",
   "browser_specific_settings": {
     "gecko": {
-      "id": "claude-bridge@dougmolineux.dev",
+      "id": "tabwright@dougmolineux.dev",
       "strict_min_version": "128.0"
     }
   },
   "permissions": ["nativeMessaging", "tabs", "scripting", "storage", "notifications"],
   "optional_host_permissions": ["<all_urls>"],
   "background": { "scripts": ["background.js"], "type": "module" },
-  "action": { "default_popup": "popup/popup.html", "default_title": "Firefox Bridge for Claude Code" },
+  "action": { "default_popup": "popup/popup.html", "default_title": "Tabwright" },
   "icons": { "48": "icons/48.png", "96": "icons/96.png" }
 }
 ```
@@ -99,7 +99,7 @@ Notes:
 
 Responsibilities:
 
-1. **Connection.** Call `runtime.connectNative("claude_bridge")` when the user clicks Connect in the popup (not automatically at startup). Reconnect with backoff if the host exits. Show a badge: grey = disconnected, green = connected, orange = agent is acting.
+1. **Connection.** Call `runtime.connectNative("tabwright")` when the user clicks Connect in the popup (not automatically at startup). Reconnect with backoff if the host exits. Show a badge: grey = disconnected, green = connected, orange = agent is acting.
 2. **Routing.** Receive requests from the host, validate them, and dispatch to the right handler or to a content script via `tabs.sendMessage(tabId, msg, { frameId })`.
 3. **Permission checks.** Before any request that touches a tab, check that the tab's origin is on the allowlist (`permissions.contains`). Otherwise return `E_SITE_NOT_ALLOWED` with the origin, so the agent can ask the user to allow it.
 4. **Approval gate.** See section 8.2.
@@ -112,7 +112,7 @@ Injected on demand with `scripting.executeScript({ target: { tabId, allFrames: t
 
 Two worlds are used:
 - **Isolated world** (default) for snapshots, element lookup and the ref registry. Page scripts can't tamper with it.
-- **Main world** (`world: "MAIN"`) only for setting values on framework-controlled inputs (section 6.4), via a small function that receives the element through a temporary `data-claude-ref` attribute.
+- **Main world** (`world: "MAIN"`) only for setting values on framework-controlled inputs (section 6.4), via a small function that receives the element through a temporary `data-tabwright-ref` attribute.
 
 ## 6. Page model
 
@@ -208,9 +208,9 @@ The receiver reassembles by `id` and processes the full message when all `total`
 
 ### 7.4 Socket and auth
 
-- Socket path: `~/Library/Application Support/ClaudeBridge/bridge.sock` (macOS), `$XDG_RUNTIME_DIR/claude-bridge/bridge.sock` (Linux). Directory mode `0700`, socket `0600`.
+- Socket path: `~/Library/Application Support/Tabwright/bridge.sock` (macOS), `$XDG_RUNTIME_DIR/tabwright/bridge.sock` (Linux). Directory mode `0700`, socket `0600`.
 - The native host creates the socket when Firefox starts it. The MCP server connects as a client and retries every 2 seconds for up to 30 seconds, returning `E_NOT_CONNECTED` to tool calls in the meantime.
-- On connect, the MCP server sends `{ "type": "hello", "token": "<secret>" }`. The secret is a random 32-byte value generated at install time and stored in `~/Library/Application Support/ClaudeBridge/token` (`0600`). The host closes connections that don't send a valid hello within 2 seconds.
+- On connect, the MCP server sends `{ "type": "hello", "token": "<secret>" }`. The secret is a random 32-byte value generated at install time and stored in `~/Library/Application Support/Tabwright/token` (`0600`). The host closes connections that don't send a valid hello within 2 seconds.
 - One MCP client at a time. A second connection is refused with a clear message.
 
 ## 8. Safety
@@ -274,7 +274,7 @@ The background script keeps the last 500 actions (time, tab URL, action, target 
 TypeScript, using `@modelcontextprotocol/sdk` over stdio. Registered with:
 
 ```
-claude mcp add firefox -- node /path/to/firefox-claude-addon/mcp-server/dist/index.js
+claude mcp add tabwright -- node /path/to/tabwright/mcp-server/dist/index.js
 ```
 
 ### 9.1 Tools
@@ -305,7 +305,7 @@ There is deliberately no `browser_eval` or `run_javascript` tool. Arbitrary scri
 
 ### 9.2 Config
 
-`~/Library/Application Support/ClaudeBridge/config.json`:
+`~/Library/Application Support/Tabwright/config.json`:
 
 ```json
 {
@@ -332,7 +332,7 @@ Added to the manifest as a `sidebar_action` (`sidebar/sidebar.html`). It contain
 
 ### 10.2 Profile
 
-Instruction mode answers questions from a profile the user maintains, not from guesses. `~/Library/Application Support/ClaudeBridge/profile.json`:
+Instruction mode answers questions from a profile the user maintains, not from guesses. `~/Library/Application Support/Tabwright/profile.json`:
 
 ```json
 {
@@ -347,7 +347,7 @@ Instruction mode answers questions from a profile the user maintains, not from g
   "links": { "github": "https://github.com/janedoe", "linkedin": null },
   "resumePath": "~/Documents/resume.pdf",
   "answers": {
-    "yearsExperience": 17,
+    "yearsExperience": 6,
     "backend5PlusYears": "Yes",
     "workAuthorizedNoSponsorship": null,
     "willingToRelocate": null,
@@ -366,7 +366,7 @@ When the user clicks Run, the native host picks an engine in this order and show
 1. **Claude (preferred).** The host runs Claude Code headless with this project's MCP server:
    ```
    claude -p "<system prompt + instruction>" --output-format stream-json \
-     --mcp-config <bridge mcp config> --allowedTools "mcp__firefox__*"
+     --mcp-config <bridge mcp config> --allowedTools "mcp__tabwright__*"
    ```
    This uses the user's existing Claude Code login, so no API key is needed. The stream is relayed to the sidebar as the step log.
 2. **Apple on-device model (fallback).** Used when Claude isn't available. See 10.4.
@@ -376,7 +376,7 @@ Claude counts as unavailable when any of these happen: the `claude` command isn'
 
 ### 10.4 Apple on-device model
 
-Uses Apple's Foundation Models framework (the model behind Apple Intelligence) through a small Swift command-line helper, `claude-bridge-fm`, which the native host runs and talks to over stdin/stdout with JSON lines.
+Uses Apple's Foundation Models framework (the model behind Apple Intelligence) through a small Swift command-line helper, `tabwright-fm`, which the native host runs and talks to over stdin/stdout with JSON lines.
 
 Requirements: Apple Silicon Mac, macOS 26 or later, Apple Intelligence turned on in System Settings. The helper checks `SystemLanguageModel.default.availability` at startup and reports the reason if the model isn't available (not supported, not enabled, or still downloading). The target machine (Apple M4, macOS 26.6) meets these requirements.
 
@@ -419,26 +419,26 @@ Every engine goes through the same extension, so the site allowlist, the approva
 
 ## 11. Native host
 
-- Node.js script with a shebang wrapper (`claude-bridge-host`), since Firefox launches it directly.
-- Native messaging manifest at `~/Library/Application Support/Mozilla/NativeMessagingHosts/claude_bridge.json`:
+- Node.js script with a shebang wrapper (`tabwright-host`), since Firefox launches it directly.
+- Native messaging manifest at `~/Library/Application Support/Mozilla/NativeMessagingHosts/tabwright.json`:
 
 ```json
 {
-  "name": "claude_bridge",
+  "name": "tabwright",
   "description": "Bridge between Claude Code and Firefox",
-  "path": "/Users/you/.local/share/claude-bridge/claude-bridge-host",
+  "path": "/Users/you/.local/share/tabwright/tabwright-host",
   "type": "stdio",
-  "allowed_extensions": ["claude-bridge@dougmolineux.dev"]
+  "allowed_extensions": ["tabwright@dougmolineux.dev"]
 }
 ```
 
-- Never writes anything except framed messages to stdout. Logs go to `~/Library/Logs/ClaudeBridge/host.log`, rotated at 5 MB.
+- Never writes anything except framed messages to stdout. Logs go to `~/Library/Logs/Tabwright/host.log`, rotated at 5 MB.
 - Exits when stdin closes (Firefox disconnected) and removes the socket.
 
 ## 12. Repository layout
 
 ```
-firefox-claude-addon/
+tabwright/
   SPEC.md
   README.md
   package.json                 npm workspaces: extension, host, mcp-server, shared
@@ -463,11 +463,11 @@ firefox-claude-addon/
     icons/
   host/
     src/index.ts
-    claude-bridge-host         shell wrapper that runs node
+    tabwright-host         shell wrapper that runs node
     src/runner.ts              instruction mode: engine selection, rules matcher, pipeline
   fm-helper/
     Package.swift              Swift CLI using the FoundationModels framework
-    Sources/claude-bridge-fm/main.swift
+    Sources/tabwright-fm/main.swift
   mcp-server/
     src/index.ts
     src/tools/*.ts
@@ -484,10 +484,10 @@ firefox-claude-addon/
 
 1. `npm install && npm run build`
 2. `scripts/install.sh`:
-   - copies the host to `~/.local/share/claude-bridge/`
+   - copies the host to `~/.local/share/tabwright/`
    - writes the native messaging manifest
    - creates the config directory, token and default config
-   - runs `claude mcp add firefox -- node <path>/mcp-server/dist/index.js`
+   - runs `claude mcp add tabwright -- node <path>/mcp-server/dist/index.js`
 3. Load the extension:
    - **Development:** `npx web-ext run --source-dir extension` (temporary, removed when Firefox closes), or `about:debugging` → Load Temporary Add-on.
    - **Daily use:** release Firefox only installs signed extensions. Sign it as unlisted (self-distributed) with `npx web-ext sign --channel=unlisted` using AMO API credentials, then install the resulting `.xpi`. Unlisted add-ons get automated review only and don't appear on AMO.

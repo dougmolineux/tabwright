@@ -144,9 +144,9 @@ beforeAll(async () => {
   env = {
     PATH: process.env.PATH ?? "",
     HOME: process.env.HOME ?? "",
-    CLAUDE_BRIDGE_DIR: dir,
-    CLAUDE_BRIDGE_CLAUDE_BIN: path.join(dir, "no-such-claude"),
-    CLAUDE_BRIDGE_FM_HELPER: path.join(dir, "no-such-fm"),
+    TABWRIGHT_DIR: dir,
+    TABWRIGHT_CLAUDE_BIN: path.join(dir, "no-such-claude"),
+    TABWRIGHT_FM_HELPER: path.join(dir, "no-such-fm"),
   };
   host = spawn(process.execPath, [HOST], { env, stdio: ["pipe", "pipe", "pipe"] });
   firefox = new FakeFirefox(host);
@@ -335,7 +335,7 @@ describe("bridge", () => {
     fs.copyFileSync(path.join(dir, "token"), path.join(dir2, "token"));
     fs.copyFileSync(path.join(dir, "profile.json"), path.join(dir2, "profile.json"));
     const host2 = spawn(process.execPath, [HOST], {
-      env: { ...env, CLAUDE_BRIDGE_DIR: dir2, CLAUDE_BRIDGE_CLAUDE_BIN: fakeClaude, CLAUDE_BRIDGE_FM_HELPER: fakeFm },
+      env: { ...env, TABWRIGHT_DIR: dir2, TABWRIGHT_CLAUDE_BIN: fakeClaude, TABWRIGHT_FM_HELPER: fakeFm },
       stdio: ["pipe", "pipe", "pipe"],
     });
     const ff2 = new FakeFirefox(host2);

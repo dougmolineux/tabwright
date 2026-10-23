@@ -8,7 +8,7 @@ import { registerReadTools } from "./tools/read.ts";
 import { registerTabTools } from "./tools/tabs.ts";
 
 const server = new McpServer(
-  { name: "firefox", version: "0.1.0" },
+  { name: "tabwright", version: "0.1.0" },
   {
     instructions:
       "Tools for operating the user's real, logged-in Firefox. Start with browser_snapshot to get element refs. " +

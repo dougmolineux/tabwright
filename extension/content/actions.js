@@ -1,6 +1,6 @@
 // Actions in the page (SPEC 6.4, 6.5) and the content-script message handler. Loaded last.
 (() => {
-  const CB = (globalThis.ClaudeBridge = globalThis.ClaudeBridge || {});
+  const CB = (globalThis.Tabwright = globalThis.Tabwright || {});
   if (CB.actionsLoaded) return;
   CB.actionsLoaded = true;
 
@@ -35,7 +35,7 @@
         resolve({ navigated: navigated || location.href !== startHref, mutated });
       };
       const obs = new MutationObserver((records) => {
-        if (records.every((r) => r.target.nodeType === 1 && r.target.closest?.("[data-claude-bridge-ui]"))) return;
+        if (records.every((r) => r.target.nodeType === 1 && r.target.closest?.("[data-tabwright-ui]"))) return;
         mutated = true;
         clearTimeout(quiet);
         quiet = setTimeout(() => finish(false), quietMs);
@@ -100,13 +100,13 @@
   /** Runs one of the main-world functions on el via the background script. */
   CB.runMain = async (fn, el, args) => {
     const nonce = "cb-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    el.setAttribute("data-claude-ref", nonce);
+    el.setAttribute("data-tabwright-ref", nonce);
     try {
       const r = await browser.runtime.sendMessage({ type: "main", fn, nonce, args });
       if (!r || r.ok === false) CB.fail("E_INTERNAL", `main-world ${fn} failed: ${r?.error ?? "no result"}`);
       return r;
     } finally {
-      el.removeAttribute("data-claude-ref");
+      el.removeAttribute("data-tabwright-ref");
     }
   };
 

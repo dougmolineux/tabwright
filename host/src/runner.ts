@@ -76,7 +76,7 @@ const EXTRA_PATH = [
 ];
 
 export function findClaude(): string | null {
-  if (process.env.CLAUDE_BRIDGE_CLAUDE_BIN) return isExecutable(process.env.CLAUDE_BRIDGE_CLAUDE_BIN) ? process.env.CLAUDE_BRIDGE_CLAUDE_BIN : null;
+  if (process.env.TABWRIGHT_CLAUDE_BIN) return isExecutable(process.env.TABWRIGHT_CLAUDE_BIN) ? process.env.TABWRIGHT_CLAUDE_BIN : null;
   const dirs = [...(process.env.PATH ?? "").split(path.delimiter), ...EXTRA_PATH];
   for (const d of dirs) {
     if (!d) continue;
@@ -89,7 +89,7 @@ export function findClaude(): string | null {
 function mcpServerPath(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    process.env.CLAUDE_BRIDGE_MCP_SERVER,
+    process.env.TABWRIGHT_MCP_SERVER,
     path.join(here, "mcp-server.js"),
     path.resolve(here, "../../mcp-server/dist/index.js"),
   ].filter(Boolean) as string[];
@@ -202,11 +202,11 @@ export class Runner {
 
     const profile = readProfile();
     const mcpConfigFile = path.join(configDir(), `run-mcp-${run.id}.json`);
-    const env: Record<string, string> = { CLAUDE_BRIDGE_RUN_TOKEN: run.token };
-    for (const k of ["CLAUDE_BRIDGE_DIR", "CLAUDE_BRIDGE_SOCKET", "CLAUDE_BRIDGE_LOG_DIR"]) if (process.env[k]) env[k] = process.env[k]!;
+    const env: Record<string, string> = { TABWRIGHT_RUN_TOKEN: run.token };
+    for (const k of ["TABWRIGHT_DIR", "TABWRIGHT_SOCKET", "TABWRIGHT_LOG_DIR"]) if (process.env[k]) env[k] = process.env[k]!;
     fs.writeFileSync(
       mcpConfigFile,
-      JSON.stringify({ mcpServers: { firefox: { command: process.execPath, args: [mcpServerPath()], env } } }),
+      JSON.stringify({ mcpServers: { tabwright: { command: process.execPath, args: [mcpServerPath()], env } } }),
       { mode: 0o600 },
     );
 
@@ -217,7 +217,7 @@ export class Runner {
       "--verbose",
       "--mcp-config", mcpConfigFile,
       "--strict-mcp-config",
-      "--allowedTools", "mcp__firefox__*",
+      "--allowedTools", "mcp__tabwright__*",
     ];
     const pathEnv = [path.dirname(process.execPath), ...EXTRA_PATH, process.env.PATH ?? "/usr/bin:/bin"].join(path.delimiter);
     const child = spawn(bin, args, {
@@ -262,7 +262,7 @@ export class Runner {
             clearTimeout(firstOutputTimer);
           }
           if (msg.type === "system" && msg.subtype === "init") {
-            const fx = (msg.mcp_servers ?? []).find((s: any) => s.name === "firefox");
+            const fx = (msg.mcp_servers ?? []).find((s: any) => s.name === "tabwright");
             if (fx && fx.status !== "connected") {
               resultError = `the Firefox MCP server failed to start (${fx.status})`;
               child.kill("SIGTERM");
@@ -327,7 +327,7 @@ export class Runner {
   private async runOnDevice(run: RunState, reasons: string[]): Promise<void> {
     if (process.platform !== "darwin") throw new Unavailable("requires macOS 26 on Apple Silicon");
     const bin = fmHelperPath();
-    if (!bin) throw new Unavailable("the claude-bridge-fm helper isn't installed");
+    if (!bin) throw new Unavailable("the tabwright-fm helper isn't installed");
     const fm = new FmHelper(bin);
     run.fm = fm;
     let avail;
@@ -373,6 +373,7 @@ export class Runner {
         await this.fillPipeline(run, summary, { fm, skip, upload: true, onlyFiles: true });
       }
     }
+    this.checkStopped(run);
     this.deps.emit("run_done", { runId: run.id, engine: "fm", summary });
   }
 
@@ -384,6 +385,7 @@ export class Runner {
     const skip = skipPhrasesFromInstruction(run.instruction);
     if (skip.length) this.logStep(run, `Leaving for you: ${skip.join(", ")}`);
     await this.fillPipeline(run, summary, { skip, upload: true });
+    this.checkStopped(run);
     this.deps.emit("run_done", { runId: run.id, engine: "rules", summary });
   }
 
@@ -548,7 +550,7 @@ export function classifyClaudeFailure(text: string): string | null {
 
 function claudePrompt(run: RunState, profile: Record<string, any> | null): string {
   return [
-    "You are operating the user's Firefox browser through the mcp__firefox__* tools, on their behalf, from the Firefox Bridge for Claude Code sidebar.",
+    "You are operating the user's Firefox browser through the mcp__tabwright__* tools, on their behalf, from the Tabwright sidebar.",
     "",
     "Rules:",
     "- Follow the user's instruction below. Use only the profile and the resume file for answers.",

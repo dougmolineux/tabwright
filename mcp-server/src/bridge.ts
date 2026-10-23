@@ -15,7 +15,8 @@ export class BridgeClient {
   private seq = 0;
   private pending = new Map<string, Pending>();
   private connecting: Promise<void> | null = null;
-  private lastError = "Firefox isn't connected yet. Open Firefox and click Connect in the Firefox Bridge for Claude Code toolbar popup.";
+  private closed = false;
+  private lastError = "Firefox isn't connected yet. Open Firefox and click Connect in the Tabwright toolbar popup.";
   onEvent: (e: EventMessage) => void = () => {};
 
   get connected(): boolean {
@@ -30,7 +31,7 @@ export class BridgeClient {
   startBackgroundConnect(): void {
     const deadline = Date.now() + RETRY_FOR_MS;
     const attempt = () => {
-      if (this.ready) return;
+      if (this.ready || this.closed) return;
       this.connectOnce().catch(() => {
         if (Date.now() < deadline) setTimeout(attempt, RETRY_EVERY_MS);
       });
@@ -45,7 +46,7 @@ export class BridgeClient {
     this.connecting = new Promise<void>((resolve, reject) => {
       let token: string;
       try {
-        token = process.env.CLAUDE_BRIDGE_RUN_TOKEN || readToken();
+        token = process.env.TABWRIGHT_RUN_TOKEN || readToken();
       } catch (err) {
         this.lastError = (err as Error).message;
         reject(err);
@@ -96,7 +97,7 @@ export class BridgeClient {
         clearTimeout(helloTimer);
         fail(
           err.code === "ENOENT" || err.code === "ECONNREFUSED"
-            ? "Firefox isn't connected. Open Firefox and click Connect in the Firefox Bridge for Claude Code toolbar popup."
+            ? "Firefox isn't connected. Open Firefox and click Connect in the Tabwright toolbar popup."
             : `Socket error: ${err.message}`,
         );
       });
@@ -112,7 +113,7 @@ export class BridgeClient {
           this.pending.delete(id);
         }
         if (wasReady) {
-          this.lastError = "Firefox disconnected. Click Connect in the Firefox Bridge for Claude Code popup.";
+          this.lastError = "Firefox disconnected. Click Connect in the Tabwright popup.";
           this.startBackgroundConnect();
         }
         if (!settled) fail("Connection closed by the native host");
@@ -158,7 +159,9 @@ export class BridgeClient {
     });
   }
 
+  /** Disconnects for good: no background reconnect afterwards. */
   close(): void {
+    this.closed = true;
     this.socket?.destroy();
   }
 }

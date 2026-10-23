@@ -3,7 +3,7 @@
 import { Reassembler, chunkMessage, validateMessage } from "./lib/protocol.js";
 import { mainSelectOptions, mainSetValue, mainUpload } from "./content/main-world-setter.js";
 
-const HOST_NAME = "claude_bridge";
+const HOST_NAME = "tabwright";
 const CONTENT_FILES = ["content/common.js", "content/refs.js", "content/snapshot.js", "content/approval.js", "content/actions.js"];
 const BLOCKED_HOSTS = new Set(["addons.mozilla.org", "accounts.firefox.com", "support.mozilla.org"]);
 const MAIN_FUNCS = { setValue: mainSetValue, selectOptions: mainSelectOptions, upload: mainUpload };
@@ -96,7 +96,7 @@ function updateBadge() {
   browser.action.setBadgeBackgroundColor({ color }).catch(() => {});
   browser.action.setBadgeText({ text: state.connected || state.error ? " " : "" }).catch(() => {});
   browser.action
-    .setTitle({ title: `Firefox Bridge for Claude Code: ${state.busy ? "acting" : state.connected ? "connected" : state.error ? state.error : "disconnected"}` })
+    .setTitle({ title: `Tabwright: ${state.busy ? "acting" : state.connected ? "connected" : state.error ? state.error : "disconnected"}` })
     .catch(() => {});
 }
 
@@ -210,6 +210,8 @@ function connect() {
       broadcast();
     })
     .catch((err) => {
+      // If the port already closed, onDisconnect has recorded the real reason; keep it.
+      if (state.port !== port) return;
       state.connecting = false;
       state.error = err.message;
       broadcast();
@@ -281,7 +283,7 @@ function hostCall(method, params = {}, timeoutMs = 30_000) {
 function onNativeMessage(raw) {
   const problem = validateMessage(raw);
   if (problem) {
-    console.warn("claude-bridge: invalid message", problem);
+    console.warn("tabwright: invalid message", problem);
     return;
   }
   let msg = raw;
@@ -417,7 +419,7 @@ async function assertAllowed(tab) {
   if (!(await isAllowedUrl(tab.url))) {
     throw new BridgeError(
       "E_SITE_NOT_ALLOWED",
-      `Claude isn't allowed on ${origin}. Ask the user to open the Firefox Bridge for Claude Code popup on that tab and click "Allow on this site".`,
+      `Claude isn't allowed on ${origin}. Ask the user to open the Tabwright popup on that tab and click "Allow on this site".`,
       { origin },
     );
   }
@@ -602,9 +604,9 @@ async function requestApproval(ctx, frameId, ref, info, timeoutMs, entry) {
   notify(id, "Claude needs your approval", `Claude wants to ${info.verb} "${info.target}" on ${host}. Approve it in the page.`);
   if (ref) await toFrame(ctx.tab.id, frameId, { cmd: "highlight", ref, on: true }).catch(() => {});
   let decision;
+  const timeout = Math.min(Math.max(Number(timeoutMs) || 120_000, 10_000), 600_000);
   try {
     await ensureContent(ctx.tab.id, 0);
-    const timeout = Math.min(Math.max(Number(timeoutMs) || 120_000, 10_000), 600_000);
     ({ decision } = await toFrame(ctx.tab.id, 0, { cmd: "approve", verb: info.verb, target: info.target, host, timeoutMs: timeout }));
   } catch (err) {
     decision = err.code === "E_STOPPED" ? "cancelled" : "gone";
@@ -622,7 +624,7 @@ async function requestApproval(ctx, frameId, ref, info, timeoutMs, entry) {
   }
   audit({ ...auditBase, result: decision, approved: false });
   if (decision === "deny") throw new BridgeError("E_APPROVAL_DENIED", `User declined: ${info.target}`);
-  if (decision === "timeout") throw new BridgeError("E_APPROVAL_TIMEOUT", `No approval within ${Math.round(timeoutMs / 1000)} s: ${info.target}`);
+  if (decision === "timeout") throw new BridgeError("E_APPROVAL_TIMEOUT", `No approval within ${Math.round(timeout / 1000)} s: ${info.target}`);
   if (decision === "cancelled") throw new BridgeError("E_STOPPED", "Stopped by the user");
   throw new BridgeError("E_APPROVAL_DENIED", `The page changed before approval: ${info.target}`);
 }
@@ -829,7 +831,7 @@ const METHODS = {
       if (/activeTab|permission/i.test(err.message)) {
         throw new BridgeError(
           "E_SITE_NOT_ALLOWED",
-          "Firefox needs the user to click the Firefox Bridge for Claude Code toolbar button on this tab before Claude can take a screenshot of it (once per page load). Ask them to, or use browser_snapshot instead.",
+          "Firefox needs the user to click the Tabwright toolbar button on this tab before Claude can take a screenshot of it (once per page load). Ask them to, or use browser_snapshot instead.",
         );
       }
       throw err;
@@ -986,14 +988,17 @@ const METHODS = {
     const options = Array.isArray(p.options) ? p.options.slice(0, 20).map(String) : [];
     addLog(`Question: ${question}`, "question");
     notify("question", "Claude has a question", `${question.slice(0, 180)} (answer in the Claude sidebar)`);
+    let q;
     const answer = await new Promise((resolve, reject) => {
-      const q = { id: `q-${Date.now()}`, question, options, resolve, reject };
+      q = { id: `q-${Date.now()}`, question, options, resolve, reject };
       q.timer = setTimeout(() => reject(new BridgeError("E_TIMEOUT", "The user didn't answer within 10 minutes")), 10 * 60_000);
       state.question = q;
       entry.cancel = () => reject(new BridgeError("E_STOPPED", "Stopped by the user"));
       broadcast();
     }).finally(() => {
-      clearTimeout(state.question?.timer);
+      clearTimeout(q.timer);
+      // A newer question may have replaced this one; leave it (and its notification) alone.
+      if (state.question !== q) return;
       state.question = null;
       browser.notifications.clear("cb-question").catch(() => {});
       broadcast();

@@ -17,7 +17,7 @@ function siteOf(url) {
 async function renderSite() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const { origin, pattern, blocked, host } = siteOf(tab?.url ?? "");
-  currentOrigin = origin;
+  currentOrigin = blocked ? null : origin;
   currentPattern = pattern;
   $("siteHost").textContent = host;
   const allowBtn = $("allowBtn");

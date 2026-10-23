@@ -27,4 +27,4 @@ await Promise.all([
     logLevel: "info",
   }),
 ]);
-await chmod("host/claude-bridge-host", 0o755).catch(() => {});
+await chmod("host/tabwright-host", 0o755).catch(() => {});

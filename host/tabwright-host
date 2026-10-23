@@ -1,7 +1,7 @@
 #!/bin/sh
 # Firefox launches this directly (SPEC 11). GUI apps get a minimal PATH, so install.sh
 # rewrites NODE below to an absolute path.
-NODE="${CLAUDE_BRIDGE_NODE:-node}"
+NODE="${TABWRIGHT_NODE:-node}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 if [ -f "$DIR/host.js" ]; then exec "$NODE" "$DIR/host.js" "$@"; fi
 exec "$NODE" "$DIR/dist/index.js" "$@"

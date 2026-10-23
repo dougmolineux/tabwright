@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Tabwright logo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1E3A5F"/>
+      <stop offset="1" stop-color="#0F1B2D"/>
+    </linearGradient>
+    <linearGradient id="span" gradientUnits="userSpaceOnUse" x1="12" y1="0" x2="116" y2="0">
+      <stop offset="0" stop-color="#FFC857"/>
+      <stop offset="1" stop-color="#FF9F43"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <!-- terminal prompt on the left bank, browser window on the right -->
+  <path d="M16 28 l9 7 l-9 7" fill="none" stroke="#7FD1C7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="88" y="24" width="26" height="20" rx="4" fill="none" stroke="#7FD1C7" stroke-width="4"/>
+  <line x1="88" y1="31" x2="114" y2="31" stroke="#7FD1C7" stroke-width="4"/>
+  <!-- suspension bridge -->
+  <g fill="none" stroke="url(#span)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 74 L38 50 Q64 102 90 50 L114 74" stroke-width="5"/>
+    <path d="M51 69.5 V90 M64 76 V90 M77 69.5 V90" stroke-width="4"/>
+    <path d="M38 50 V102 M90 50 V102" stroke-width="7"/>
+    <path d="M12 90 H116" stroke-width="7"/>
+  </g>
+  <path d="M20 108 q6 -4 12 0 t12 0 M84 108 q6 -4 12 0 t12 0" fill="none" stroke="#7FD1C7" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
+</svg>

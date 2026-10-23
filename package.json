@@ -1,7 +1,22 @@
 {
-  "name": "firefox-claude-addon",
+  "name": "tabwright",
   "private": true,
   "version": "0.1.0",
+  "description": "Lets Claude Code read and operate the Firefox tabs you allow, with your approval for anything consequential.",
+  "license": "MIT",
+  "author": "Doug Molineux",
+  "keywords": [
+    "firefox",
+    "firefox-extension",
+    "claude",
+    "claude-code",
+    "mcp",
+    "model-context-protocol",
+    "browser-automation"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "workspaces": [
     "shared",
@@ -20,10 +35,12 @@
     "ext:lint": "web-ext lint --source-dir extension",
     "ext:sign": "web-ext sign --source-dir extension --channel=unlisted",
     "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts",
-    "pretest": "npm run build"
+    "pretest": "npm run build",
+    "coverage": "npm run build && vitest run --coverage"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "esbuild": "^0.28.2",
     "geckodriver": "^6.1.1",
     "jsdom": "^26.1.0",
@@ -32,8 +49,7 @@
     "react-select": "^5.10.2",
     "selenium-webdriver": "^4.50.0",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
-  },
-  "license": "MIT",
-  "description": "Lets Claude Code read and operate the Firefox tabs you allow, with your approval for anything consequential."
+    "vitest": "^3.2.0",
+    "web-ext": "^8.10.0"
+  }
 }

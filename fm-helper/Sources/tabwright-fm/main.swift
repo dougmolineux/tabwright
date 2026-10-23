@@ -1,4 +1,4 @@
-// claude-bridge-fm: a small CLI around Apple's Foundation Models framework (SPEC 10.4).
+// tabwright-fm: a small CLI around Apple's Foundation Models framework (SPEC 10.4).
 // Protocol: one JSON object per line on stdin ({ "id", "op", ... }), one JSON reply per line on stdout
 // ({ "id", "result" } or { "id", "error" }). Every prompt is kept small: the on-device context is ~4k tokens.
 import Foundation

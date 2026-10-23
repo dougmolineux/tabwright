@@ -1,11 +1,11 @@
 // Functions run in the page's main world (SPEC 5.3, 6.4) with scripting.executeScript({ world: "MAIN", func }).
 // Each must be self-contained: it is serialized and runs with no access to the extension. The target
-// element is found through a temporary data-claude-ref attribute set by the content script.
+// element is found through a temporary data-tabwright-ref attribute set by the content script.
 
 /** Sets a value the way a framework expects: native prototype setter, then input/change events. */
 export function mainSetValue(nonce, opts) {
   const find = (root) => {
-    const hit = root.querySelector(`[data-claude-ref="${nonce}"]`);
+    const hit = root.querySelector(`[data-tabwright-ref="${nonce}"]`);
     if (hit) return hit;
     for (const host of root.querySelectorAll("*")) {
       if (host.shadowRoot) {
@@ -59,7 +59,18 @@ export function mainSetValue(nonce, opts) {
 
 /** Selects options of a native <select> by index and fires input/change. */
 export function mainSelectOptions(nonce, indexes) {
-  const el = document.querySelector(`[data-claude-ref="${nonce}"]`);
+  const find = (root) => {
+    const hit = root.querySelector(`[data-tabwright-ref="${nonce}"]`);
+    if (hit) return hit;
+    for (const host of root.querySelectorAll("*")) {
+      if (host.shadowRoot) {
+        const inner = find(host.shadowRoot);
+        if (inner) return inner;
+      }
+    }
+    return null;
+  };
+  const el = find(document);
   if (!el) return { ok: false, error: "element not found" };
   const want = new Set(indexes);
   if (el.multiple) {
@@ -77,7 +88,7 @@ export function mainSelectOptions(nonce, indexes) {
 /** Puts a file into an <input type=file>, or drops it on a drop zone. */
 export function mainUpload(nonce, file) {
   const find = (root) => {
-    const hit = root.querySelector(`[data-claude-ref="${nonce}"]`);
+    const hit = root.querySelector(`[data-tabwright-ref="${nonce}"]`);
     if (hit) return hit;
     for (const host of root.querySelectorAll("*")) {
       if (host.shadowRoot) {

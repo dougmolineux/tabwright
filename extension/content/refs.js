@@ -1,7 +1,7 @@
 // Element ref registry for this frame (SPEC 6.2). Refs are allocated from a tab-wide counter that the
 // background script passes in, so "e12" is unique across all frames of a tab.
 (() => {
-  const CB = (globalThis.ClaudeBridge = globalThis.ClaudeBridge || {});
+  const CB = (globalThis.Tabwright = globalThis.Tabwright || {});
   if (CB.refsLoaded) return;
   CB.refsLoaded = true;
 

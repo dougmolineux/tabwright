@@ -6,3 +6,4 @@ test/fixtures/build/
 web-ext-artifacts/
 *.log
 .DS_Store
+coverage/

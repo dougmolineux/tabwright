@@ -1,7 +1,7 @@
 // Shared page-model helpers: visibility, accessible names, roles and the safety classifiers
 // (consequential actions, sensitive fields). Loaded first into every controlled frame, and by unit tests.
 (() => {
-  const CB = (globalThis.ClaudeBridge = globalThis.ClaudeBridge || {});
+  const CB = (globalThis.Tabwright = globalThis.Tabwright || {});
   if (CB.commonLoaded) return;
   CB.commonLoaded = true;
   CB.settings = CB.settings || { checkSize: true };

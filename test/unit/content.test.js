@@ -14,7 +14,7 @@ let submitted = 0;
 let refCounter = 1;
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = false;
-globalThis.ClaudeBridge = { settings: { checkSize: false } }; // jsdom has no layout
+globalThis.Tabwright = { settings: { checkSize: false } }; // jsdom has no layout
 Element.prototype.scrollIntoView = function () {};
 if (!globalThis.PointerEvent) globalThis.PointerEvent = class extends MouseEvent {};
 globalThis.browser = {
@@ -233,7 +233,7 @@ describe("actions", () => {
   it("shows the approval prompt and times out without a real click", async () => {
     const res = await cmd("approve", { verb: "click", target: "Submit application", host: "example.com", timeoutMs: 150 });
     expect(res.decision).toBe("timeout");
-    expect(document.querySelector("claude-bridge-approval")).toBeNull();
+    expect(document.querySelector("tabwright-approval")).toBeNull();
   });
 });
 

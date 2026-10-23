@@ -30,38 +30,52 @@ export function expandHome(p: string): string {
 
 /** Directory holding config.json, token, profile.json (and the socket on macOS). */
 export function configDir(): string {
-  if (process.env.CLAUDE_BRIDGE_DIR) return process.env.CLAUDE_BRIDGE_DIR;
-  if (process.platform === "darwin") return path.join(os.homedir(), "Library", "Application Support", "ClaudeBridge");
+  if (process.env.TABWRIGHT_DIR) return process.env.TABWRIGHT_DIR;
+  if (process.platform === "darwin") return path.join(os.homedir(), "Library", "Application Support", "Tabwright");
   const xdg = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
-  return path.join(xdg, "claude-bridge");
+  return path.join(xdg, "tabwright");
 }
 
 export function socketPath(): string {
-  if (process.env.CLAUDE_BRIDGE_SOCKET) return process.env.CLAUDE_BRIDGE_SOCKET;
-  if (process.platform === "darwin" || process.env.CLAUDE_BRIDGE_DIR) return path.join(configDir(), "bridge.sock");
-  const runtime = process.env.XDG_RUNTIME_DIR || path.join(os.tmpdir(), `claude-bridge-${os.userInfo().uid}`);
-  return path.join(runtime, "claude-bridge", "bridge.sock");
+  if (process.env.TABWRIGHT_SOCKET) return process.env.TABWRIGHT_SOCKET;
+  if (process.platform === "darwin" || process.env.TABWRIGHT_DIR) return path.join(configDir(), "bridge.sock");
+  const runtime = process.env.XDG_RUNTIME_DIR || path.join(os.tmpdir(), `tabwright-${os.userInfo().uid}`);
+  return path.join(runtime, "tabwright", "bridge.sock");
 }
 
 export function logDir(): string {
-  if (process.env.CLAUDE_BRIDGE_LOG_DIR) return process.env.CLAUDE_BRIDGE_LOG_DIR;
-  if (process.env.CLAUDE_BRIDGE_DIR) return path.join(process.env.CLAUDE_BRIDGE_DIR, "logs");
-  if (process.platform === "darwin") return path.join(os.homedir(), "Library", "Logs", "ClaudeBridge");
+  if (process.env.TABWRIGHT_LOG_DIR) return process.env.TABWRIGHT_LOG_DIR;
+  if (process.env.TABWRIGHT_DIR) return path.join(process.env.TABWRIGHT_DIR, "logs");
+  if (process.platform === "darwin") return path.join(os.homedir(), "Library", "Logs", "Tabwright");
   const state = process.env.XDG_STATE_HOME || path.join(os.homedir(), ".local", "state");
-  return path.join(state, "claude-bridge");
+  return path.join(state, "tabwright");
 }
 
 export const tokenPath = () => path.join(configDir(), "token");
 export const configPath = () => path.join(configDir(), "config.json");
 export const profilePath = () => path.join(configDir(), "profile.json");
 
+/**
+ * Reads config.json over the defaults. A value of the wrong type falls back to its default: a string
+ * allowedUploadDirs, for instance, would otherwise be iterated per character and allow "/".
+ */
 export function loadConfig(): BridgeConfig {
+  const cfg: BridgeConfig = { ...DEFAULT_CONFIG, allowedUploadDirs: [...DEFAULT_CONFIG.allowedUploadDirs] };
+  let raw: any;
   try {
-    const raw = JSON.parse(fs.readFileSync(configPath(), "utf8"));
-    return { ...DEFAULT_CONFIG, ...raw };
+    raw = JSON.parse(fs.readFileSync(configPath(), "utf8"));
   } catch {
-    return { ...DEFAULT_CONFIG };
+    return cfg;
   }
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return cfg;
+  if (Array.isArray(raw.allowedUploadDirs) && raw.allowedUploadDirs.every((d: unknown) => typeof d === "string" && d)) {
+    cfg.allowedUploadDirs = raw.allowedUploadDirs;
+  }
+  for (const k of ["maxUploadBytes", "snapshotCharLimit", "approvalTimeoutSec"] as const) {
+    if (typeof raw[k] === "number" && Number.isFinite(raw[k]) && raw[k] > 0) cfg[k] = raw[k];
+  }
+  if (typeof raw.draftFreeText === "boolean") cfg.draftFreeText = raw.draftFreeText;
+  return cfg;
 }
 
 export function readToken(): string {

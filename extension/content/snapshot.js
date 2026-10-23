@@ -2,7 +2,7 @@
 // Returns items { d: depth, t: line } plus frame placeholders { d, frameId } that the background
 // script replaces with the child frame's own snapshot.
 (() => {
-  const CB = (globalThis.ClaudeBridge = globalThis.ClaudeBridge || {});
+  const CB = (globalThis.Tabwright = globalThis.Tabwright || {});
   if (CB.snapshotLoaded) return;
   CB.snapshotLoaded = true;
 
@@ -126,10 +126,12 @@
         if (node.nodeType !== 1) continue;
         const el = node;
         const tag = el.tagName.toLowerCase();
-        if (SKIP_TAGS.has(tag) || el.hasAttribute("data-claude-bridge-ui")) continue;
+        if (SKIP_TAGS.has(tag) || el.hasAttribute("data-tabwright-ui")) continue;
         if (tag === "legend" && el.parentElement?.tagName.toLowerCase() === "fieldset") continue; // the group's name
         if (CB.isHidden(el)) continue;
-        const role = CB.roleOf(el);
+        let role = CB.roleOf(el);
+        // A role-less assertive live region (a common way to show validation errors) reads as an alert.
+        if (!role && el.getAttribute("aria-live") === "assertive" && !el.querySelector(CB.INTERACTIVE_SELECTOR)) role = "alert";
 
         if (tag === "label" && !role) {
           const ctl = el.control;

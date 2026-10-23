@@ -2,7 +2,7 @@
 // local fixtures. Firefox runs in a throwaway profile via geckodriver.
 //
 // Needs Firefox (FIREFOX_BIN, default /Applications/Firefox.app). While it runs, the test temporarily writes
-// the claude_bridge native messaging manifest (backing up and restoring any existing one).
+// the tabwright native messaging manifest (backing up and restoring any existing one).
 //
 //   npm run test:e2e
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -18,14 +18,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startFixtureServer } from "../fixtures/serve.mjs";
 
 const ROOT = path.resolve(__dirname, "../..");
-const EXT_ID = "claude-bridge@dougmolineux.dev";
+const EXT_ID = "tabwright@dougmolineux.dev";
 const EXT_UUID = "6d2a4f1e-0c7b-4b8a-9d55-1c1a2b3c4d5e";
 const FIREFOX_BIN = process.env.FIREFOX_BIN ?? "/Applications/Firefox.app/Contents/MacOS/firefox";
 const NMH_DIR =
   process.platform === "darwin"
     ? path.join(os.homedir(), "Library/Application Support/Mozilla/NativeMessagingHosts")
     : path.join(os.homedir(), ".mozilla/native-messaging-hosts");
-const NMH_FILE = path.join(NMH_DIR, "claude_bridge.json");
+const NMH_FILE = path.join(NMH_DIR, "tabwright.json");
 
 let dir: string;
 let fixtures: { port: number; close: () => Promise<void> };
@@ -93,7 +93,7 @@ async function openTab(url: string): Promise<number> {
 }
 
 async function waitForPrompt() {
-  await driver.wait(until.elementLocated(By.css("claude-bridge-approval")), 15_000);
+  await driver.wait(until.elementLocated(By.css("tabwright-approval")), 15_000);
   await driver.sleep(200);
 }
 
@@ -109,21 +109,21 @@ beforeAll(async () => {
   fs.writeFileSync(path.join(dir, "docs", "resume.pdf"), "%PDF-1.4 fake resume");
 
   // Native host wrapper for this run.
-  const wrapper = path.join(dir, "claude-bridge-host");
+  const wrapper = path.join(dir, "tabwright-host");
   fs.writeFileSync(wrapper, `#!/bin/sh\nexec "${process.execPath}" "${path.join(ROOT, "host/dist/index.js")}"\n`, { mode: 0o755 });
   fs.mkdirSync(NMH_DIR, { recursive: true });
   if (fs.existsSync(NMH_FILE)) manifestBackup = fs.readFileSync(NMH_FILE, "utf8");
   fs.writeFileSync(
     NMH_FILE,
-    JSON.stringify({ name: "claude_bridge", description: "Bridge between Claude Code and Firefox (e2e)", path: wrapper, type: "stdio", allowed_extensions: [EXT_ID] }),
+    JSON.stringify({ name: "tabwright", description: "Bridge between Claude Code and Firefox (e2e)", path: wrapper, type: "stdio", allowed_extensions: [EXT_ID] }),
   );
 
   fixtures = await startFixtureServer(0);
   base = `http://127.0.0.1:${fixtures.port}`;
 
   // Firefox -> native host inherit this environment (via geckodriver).
-  process.env.CLAUDE_BRIDGE_DIR = dir;
-  process.env.CLAUDE_BRIDGE_CLAUDE_BIN = path.join(dir, "no-claude"); // instruction mode must not call the real Claude
+  process.env.TABWRIGHT_DIR = dir;
+  process.env.TABWRIGHT_CLAUDE_BIN = path.join(dir, "no-claude"); // instruction mode must not call the real Claude
 
   // @ts-expect-error untyped
   const { download } = await import("geckodriver");
@@ -146,7 +146,7 @@ beforeAll(async () => {
 
   client = new Client({ name: "e2e", version: "0" });
   await client.connect(
-    new StdioClientTransport({ command: process.execPath, args: [path.join(ROOT, "mcp-server/dist/index.js")], env: { ...(process.env as any), CLAUDE_BRIDGE_DIR: dir }, stderr: "ignore" }),
+    new StdioClientTransport({ command: process.execPath, args: [path.join(ROOT, "mcp-server/dist/index.js")], env: { ...(process.env as any), TABWRIGHT_DIR: dir }, stderr: "ignore" }),
   );
 });
 
