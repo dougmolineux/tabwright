@@ -66,6 +66,7 @@ function renderState(s) {
   const btn = $("connectBtn");
   btn.textContent = s.connected || s.connecting ? "Disconnect" : "Connect";
   btn.dataset.action = s.connected || s.connecting ? "disconnect" : "connect";
+  $("autoApprove").checked = s.autoApprove === true;
   $("approvalsSec").hidden = !s.approvals.length;
   const ul = $("approvals");
   ul.replaceChildren();
@@ -90,6 +91,7 @@ $("allowBtn").addEventListener("click", () => {
 
 $("connectBtn").addEventListener("click", () => browser.runtime.sendMessage({ type: $("connectBtn").dataset.action || "connect" }));
 $("stopBtn").addEventListener("click", () => browser.runtime.sendMessage({ type: "stop" }));
+$("autoApprove").addEventListener("change", (e) => browser.runtime.sendMessage({ type: "set_auto_approve", enabled: e.target.checked }));
 $("openSidebar").addEventListener("click", (e) => {
   e.preventDefault();
   browser.sidebarAction.open();

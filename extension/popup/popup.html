@@ -38,6 +38,12 @@
     <button id="stopBtn" class="danger" title="Cancel everything, remove the indicator and disconnect">Stop</button>
   </section>
 
+  <section class="card">
+    <h3>Approvals</h3>
+    <label><input type="checkbox" id="autoApprove"> Auto-approve submit, pay and delete actions</label>
+    <div class="muted">When on, Claude can click buttons that would normally ask you first.</div>
+  </section>
+
   <section class="card" id="approvalsSec" hidden>
     <h3>Waiting for your approval</h3>
     <ul class="plain" id="approvals"></ul>

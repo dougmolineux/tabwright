@@ -40,6 +40,7 @@ const state = {
   busy: 0,
   selectedTabId: null,
   approvals: new Map(), // id -> { id, tabId, verb, target, host }
+  autoApprove: false, // user opt-in from the popup: skip the in-page approval prompt
   question: null, // { id, question, options, resolve, reject, timer }
   run: null, // { runId, engine, label, status, instruction, summary, message, offerContinue }
   log: [], // live step log for the sidebar
@@ -79,6 +80,12 @@ async function restore() {
   } catch {
     /* fresh start */
   }
+  try {
+    const { autoApprove } = await browser.storage.local.get("autoApprove");
+    state.autoApprove = autoApprove === true;
+  } catch {
+    /* default off */
+  }
 }
 const restored = restore();
 
@@ -102,6 +109,7 @@ function publicState() {
     selectedTabId: state.selectedTabId,
     hostInfo: state.hostInfo,
     approvals: [...state.approvals.values()],
+    autoApprove: state.autoApprove,
     question: state.question ? { id: state.question.id, question: state.question.question, options: state.question.options } : null,
     run: state.run,
     log: state.log.slice(-200),
@@ -580,6 +588,11 @@ function notify(id, title, message) {
 }
 
 async function requestApproval(ctx, frameId, ref, info, timeoutMs, entry) {
+  if (state.autoApprove) {
+    addLog(`Auto-approved: ${info.target}`, "approval");
+    audit({ url: ctx.tab.url, action: "approval", target: info.target, result: "auto-allowed", approved: true });
+    return;
+  }
   const host = new URL(ctx.tab.url).hostname;
   const id = `a-${++approvalSeq}`;
   const approval = { id, tabId: ctx.tab.id, verb: info.verb, target: info.target, host, reason: info.reason };
@@ -1091,6 +1104,11 @@ async function handleUi(msg) {
     }
     case "site_changed":
       broadcast();
+      return { ok: true };
+    case "set_auto_approve":
+      state.autoApprove = msg.enabled === true;
+      await browser.storage.local.set({ autoApprove: state.autoApprove });
+      addLog(state.autoApprove ? "Auto-approve turned on" : "Auto-approve turned off", "approval");
       return { ok: true };
     case "answer":
       if (state.question && state.question.id === msg.id) state.question.resolve(String(msg.answer ?? ""));
