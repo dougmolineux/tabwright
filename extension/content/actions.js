@@ -491,10 +491,18 @@
       const isControl = ["textbox", "combobox", "listbox", "checkbox", "radio", "switch", "file", "slider", "spinbutton"].includes(role);
       return msg.label ? isControl : !isControl || role === "checkbox" || role === "radio";
     });
-    const names = candidates.map((el) => CB.accessibleName(el));
     const lw = clean(want).toLowerCase();
-    let hits = candidates.filter((_, i) => clean(names[i]).toLowerCase() === lw);
-    if (!hits.length) hits = candidates.filter((_, i) => clean(names[i]).toLowerCase().includes(lw));
+    const match = (list) => {
+      const names = list.map((el) => clean(CB.accessibleName(el)).toLowerCase());
+      let hits = list.filter((_, i) => names[i] === lw);
+      if (!hits.length) hits = list.filter((_, i) => names[i].includes(lw));
+      return hits;
+    };
+    let hits = match(candidates);
+    // Fall back to button-like elements that aren't real controls (only for text targets, not labels).
+    if (!hits.length && !msg.label) {
+      hits = match(deepQueryAll("a:not([href]), span, div").filter((el) => !CB.isHidden(el) && CB.isPointerClickable(el)));
+    }
     return {
       matches: hits.slice(0, 10).map((el) => ({ ref: CB.refFor(el, alloc), role: CB.roleOf(el), name: CB.truncate(CB.accessibleName(el), 120) })),
       total: hits.length,

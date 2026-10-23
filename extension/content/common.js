@@ -86,7 +86,8 @@
     const tag = el.tagName.toLowerCase();
     switch (tag) {
       case "a":
-        return el.hasAttribute("href") ? "link" : null;
+        if (el.hasAttribute("href")) return "link";
+        return CB.isPointerClickable(el) ? "button" : null;
       case "button":
       case "summary":
         return "button";
@@ -133,8 +134,26 @@
         return "frame";
       default:
         if (el.isContentEditable && (el.parentElement === null || !el.parentElement.isContentEditable)) return "textbox";
+        if ((tag === "span" || tag === "div") && CB.isPointerClickable(el)) return "button";
         return null;
     }
+  };
+
+  /**
+   * Non-semantic elements that act as buttons (e.g. App Store Connect's enabled "Save", which isn't a <button>):
+   * an <a> without href that is focusable or has an onclick, or the outermost element of a cursor:pointer
+   * region with a short label and no real controls inside or around it.
+   */
+  CB.isPointerClickable = (el) => {
+    if (el.parentElement?.closest(CB.INTERACTIVE_SELECTOR)) return false;
+    if (el.querySelector(CB.INTERACTIVE_SELECTOR)) return false;
+    const label = norm(el.textContent);
+    if (!label || label.length > 40) return false;
+    if (el.tagName.toLowerCase() === "a" && (el.hasAttribute("onclick") || el.hasAttribute("tabindex"))) return true;
+    const st = styleOf(el);
+    if (!st || st.cursor !== "pointer") return false;
+    const parent = el.parentElement && styleOf(el.parentElement);
+    return !parent || parent.cursor !== "pointer";
   };
 
   /** Roles that get a ref because an agent can act on them. */
