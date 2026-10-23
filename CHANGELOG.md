@@ -6,11 +6,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- **Requires Firefox 140 or later** (was 128), for Firefox's built-in data collection consent.
 - **Renamed to Tabwright.** The add-on ID is now `tabwright@dougmolineux.dev`, the native host is `tabwright`, the MCP server is `tabwright` (tools are `mcp__tabwright__browser_*`), the config directory is `Tabwright` (`tabwright` on Linux) and environment variables use the `TABWRIGHT_` prefix.
 
 ### Added
 
 - Project logo and new toolbar icon.
+- `data_collection_permissions` in the manifest, declaring the page content, page activity, browsing activity and personal information the add-on passes to Claude Code.
+- `PRIVACY.md`, the addons.mozilla.org listing text in `docs/amo-listing.md`, and `npm run ext:package` to build the add-on and source zips for submission.
 - CONTRIBUTING guide, issue and pull request templates, and a CI workflow.
 - Unit tests for the background script, extension pages, the MCP tool layer, the native host's runner and on-device helper client, and the shared Node helpers. `npm run coverage` prints a coverage report.
 

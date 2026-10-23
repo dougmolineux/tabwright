@@ -22,7 +22,7 @@ await Promise.all([
     bundle: true,
     format: "esm",
     platform: "browser",
-    target: "firefox128",
+    target: "firefox140",
     banner: { js: "// Generated from shared/protocol.ts by scripts/build.mjs. Do not edit." },
     logLevel: "info",
   }),

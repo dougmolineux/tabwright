@@ -70,7 +70,7 @@ A WebSocket on `localhost` is simpler, but any web page the user visits can try 
 
 ### 5.1 Manifest
 
-Manifest V3. Firefox 128 or later is required (needed for `scripting.executeScript` with `world: "MAIN"`).
+Manifest V3. Firefox 140 or later is required: 128 added `scripting.executeScript` with `world: "MAIN"`, and 140 added the built-in data collection consent the manifest declares.
 
 ```json
 {
@@ -80,7 +80,7 @@ Manifest V3. Firefox 128 or later is required (needed for `scripting.executeScri
   "browser_specific_settings": {
     "gecko": {
       "id": "tabwright@dougmolineux.dev",
-      "strict_min_version": "128.0"
+      "strict_min_version": "140.0"
     }
   },
   "permissions": ["nativeMessaging", "tabs", "scripting", "storage", "notifications"],

@@ -5,7 +5,7 @@ Thanks for helping out. This project hands an AI agent your real, logged-in brow
 ## Setup
 
 ```sh
-git clone <this repository>
+git clone https://github.com/dougmolineux/tabwright.git
 cd tabwright
 npm install
 npm run build
@@ -74,6 +74,19 @@ In the pull request, say what the change protects against or relaxes, and add te
 2. Keep each PR to one change. Include tests and doc updates.
 3. Make sure `npm run typecheck`, `npm test` and `npm run ext:lint` pass. Run `npm run test:e2e` too if you touched the extension.
 4. Describe how you tested it, including the Firefox and OS versions for anything browser-specific.
+
+## Releasing
+
+1. Bump the version in every place that has it:
+   - `extension/manifest.json`
+   - `package.json` and the four workspace `package.json` files
+   - `mcp-server/src/index.ts`
+   - `host/src/handlers.ts`
+2. Move the `Unreleased` entries in `CHANGELOG.md` under the new version.
+3. Commit, then tag the commit (`git tag v<version>`) and push the tag.
+4. Run `npm run ext:package`. It refuses to run with uncommitted changes, rebuilds, and checks that the committed `extension/lib/protocol.js` matches the build.
+5. On [addons.mozilla.org](https://addons.mozilla.org/developers/), upload the new version from `web-ext-artifacts/` together with the source zip. Paste the reviewer notes from [docs/amo-listing.md](docs/amo-listing.md) and update them if permissions or data handling changed.
+6. If anything changed about what data is handled or where it goes, update `PRIVACY.md` and the manifest's `data_collection_permissions` in the same release.
 
 ## Reporting bugs and security issues
 

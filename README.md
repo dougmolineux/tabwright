@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <img alt="Firefox 128+" src="https://img.shields.io/badge/Firefox-128%2B-orange.svg">
+  <img alt="Firefox 140+" src="https://img.shields.io/badge/Firefox-140%2B-orange.svg">
   <img alt="Node.js 20+" src="https://img.shields.io/badge/Node.js-20%2B-green.svg">
   <img alt="Platform: macOS" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20(untested)-lightgrey.svg">
 </p>
@@ -30,6 +30,7 @@
 - [Instruction mode (sidebar)](#instruction-mode-sidebar)
 - [Configuration](#configuration)
 - [Safety model](#safety-model)
+- [Privacy](#privacy)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
 - [Testing](#testing)
@@ -75,14 +76,14 @@ The full design lives in [SPEC.md](SPEC.md).
 
 ## Install
 
-**Requirements:** Firefox 128+ and Node.js 20+. The optional on-device fallback also needs Apple Silicon, macOS 26+, Apple Intelligence turned on, and the Xcode command-line tools.
+**Requirements:** Firefox 140+ and Node.js 20+. The optional on-device fallback also needs Apple Silicon, macOS 26+, Apple Intelligence turned on, and the Xcode command-line tools.
 
 **Platforms:** macOS is tested, including the on-device fallback. Linux paths are implemented but untested. Windows isn't supported yet.
 
 ### 1. Install the native host and MCP server
 
 ```sh
-git clone <this repository>
+git clone https://github.com/dougmolineux/tabwright.git
 cd tabwright
 scripts/install.sh
 ```
@@ -216,6 +217,10 @@ Read [SECURITY.md](SECURITY.md) before installing. It covers what the add-on pro
 - **The socket is authenticated.** It needs a 32-byte token and sits in a `0700` directory.
 - **Prompt injection isn't solved.** The approval gate and the allowlist are the real protection.
 
+## Privacy
+
+Tabwright has no servers, accounts, analytics or telemetry. Page data from the sites you allow goes to the native host and Claude Code on your computer, and from Claude Code to Anthropic as part of your conversation with Claude. The activity log, profile and settings stay on your computer. See [PRIVACY.md](PRIVACY.md) for the details.
+
 ## Troubleshooting
 
 <details>
@@ -266,6 +271,7 @@ npm run test:e2e     # real Firefox via geckodriver
 npm run fixtures     # serve test pages at http://127.0.0.1:8765/
 npm run ext:run      # launch Firefox with the extension loaded
 npm run ext:lint     # web-ext lint
+npm run ext:package  # add-on and source zips for addons.mozilla.org (see docs/amo-listing.md)
 ```
 
 `extension/lib/protocol.js` is generated from `shared/protocol.ts`. Edit the TypeScript and rebuild; don't edit the JavaScript.
@@ -302,7 +308,7 @@ shared/             protocol (used by everything) and Node helpers (config, toke
 fm-helper/          Swift helper for Apple's on-device model
 scripts/            build, install, uninstall, example profile
 test/               unit, integration and e2e suites, and HTML fixtures
-docs/               logo
+docs/               logo, addons.mozilla.org listing text
 ```
 
 ## Known limitations

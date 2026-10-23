@@ -5,6 +5,14 @@
   "description": "Lets Claude Code read and operate the Firefox tabs you allow, with your approval for anything consequential.",
   "license": "MIT",
   "author": "Doug Molineux",
+  "homepage": "https://github.com/dougmolineux/tabwright#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dougmolineux/tabwright.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dougmolineux/tabwright/issues"
+  },
   "keywords": [
     "firefox",
     "firefox-extension",
@@ -36,7 +44,8 @@
     "ext:sign": "web-ext sign --source-dir extension --channel=unlisted",
     "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts",
     "pretest": "npm run build",
-    "coverage": "npm run build && vitest run --coverage"
+    "coverage": "npm run build && vitest run --coverage",
+    "ext:package": "scripts/package-amo.sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
