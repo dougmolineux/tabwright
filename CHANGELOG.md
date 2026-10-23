@@ -11,7 +11,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
-- Project logo and new toolbar icon.
+- Project logo, new toolbar icon, and screenshots in `docs/screenshots/`.
 - `data_collection_permissions` in the manifest, declaring the page content, page activity, browsing activity and personal information the add-on passes to Claude Code.
 - `PRIVACY.md`, the addons.mozilla.org listing text in `docs/amo-listing.md`, and `npm run ext:package` to build the add-on and source zips for submission.
 - CONTRIBUTING guide, issue and pull request templates, and a CI workflow.
@@ -29,6 +29,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Selecting an option in a `<select>` inside a shadow root failed with "element not found".
 - Role-less `aria-live="assertive"` regions (common for validation errors) now show as alerts in snapshots.
 - The popup could request permission for an always-blocked site through a scripted click on its hidden Allow button.
+- The sidebar always showed "Claude isn't allowed on this site", even on allowed sites: a `display` rule overrode the `hidden` attribute.
+- In a narrow sidebar (Firefox's default width), the question box, step log and engine label overflowed and were clipped.
 
 ### Also changed
 

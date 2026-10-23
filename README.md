@@ -20,6 +20,10 @@
 
 ---
 
+<p align="center">
+  <img src="docs/screenshots/approval.png" width="800" alt="Tabwright sidebar listing the steps Claude took to fill in a job application, with an in-page prompt asking the user to allow or deny clicking Submit application">
+</p>
+
 ## Contents
 
 - [What it does](#what-it-does)

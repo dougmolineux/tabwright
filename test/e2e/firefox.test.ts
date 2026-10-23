@@ -166,6 +166,60 @@ describe("Firefox end to end", () => {
     expect(s.allowedSites).toContain("http://127.0.0.1");
   });
 
+  // Classes that set display (.notice, .row...) beat the browser's own [hidden] rule; jsdom's cascade
+  // ignores !important, so this needs real Firefox.
+  it("hides every element that has the hidden attribute on the extension pages", async () => {
+    for (const page of ["popup/popup.html", "popup/activity.html", "sidebar/sidebar.html"]) {
+      await driver.get(ext(page));
+      const shown = await driver.executeScript(`
+        return [...document.body.querySelectorAll("*")].filter((el) => {
+          const was = el.hidden;
+          el.hidden = true;
+          const display = getComputedStyle(el).display;
+          el.hidden = was;
+          return display !== "none";
+        }).map((el) => el.tagName.toLowerCase() + "#" + el.id + "." + el.className);`);
+      expect(shown, page).toEqual([]);
+    }
+  });
+
+  it("fits the sidebar into a narrow panel without clipping", async () => {
+    // A 215 px frame is Firefox's default sidebar width; a wider window wouldn't show the overflow.
+    await driver.get(ext("popup/activity.html"));
+    const res = await driver.executeAsyncScript(`
+      const done = arguments[0];
+      const frame = document.createElement("iframe");
+      frame.style.cssText = "width: 215px; height: 900px; border: 0";
+      frame.src = "../sidebar/sidebar.html";
+      frame.onload = () => setTimeout(() => {
+        const d = frame.contentDocument;
+        for (const id of ["allowBox", "questionBox", "resultBox"]) d.getElementById(id).hidden = false;
+        d.getElementById("engine").textContent = "On-device (Apple)";
+        d.getElementById("questionText").textContent = "Are you currently authorized to work in the United States without sponsorship?";
+        const clipped = [...d.body.querySelectorAll("*")].filter((el) => {
+          const card = el.parentElement.closest(".card");
+          return card && el.getClientRects().length && el.getBoundingClientRect().right > card.getBoundingClientRect().right + 0.5;
+        }).map((el) => el.tagName.toLowerCase() + "#" + el.id);
+        done({ scrollWidth: d.documentElement.scrollWidth, clientWidth: d.documentElement.clientWidth, clipped });
+      }, 300);
+      document.body.append(frame);`);
+    expect(res.scrollWidth).toBeLessThanOrEqual(res.clientWidth);
+    expect(res.clipped).toEqual([]);
+  });
+
+  it("shows the sidebar's allow prompt only on sites that aren't allowed", async () => {
+    const allowedTab = await openTab(`${base}/plain-form.html`);
+    const blockedTab = await openTab(`http://localhost:${fixtures.port}/plain-form.html`);
+    await driver.switchTo().newWindow("tab");
+    await driver.get(ext(`sidebar/sidebar.html?tab=${allowedTab}`));
+    await driver.wait(until.elementLocated(By.id("allowBox")), 5000);
+    await driver.sleep(300);
+    expect(await driver.findElement(By.id("allowBox")).isDisplayed()).toBe(false);
+    await driver.get(ext(`sidebar/sidebar.html?tab=${blockedTab}`));
+    await driver.wait(until.elementIsVisible(driver.findElement(By.id("allowBox"))), 5000);
+    expect(await driver.findElement(By.id("allowText")).getText()).toMatch(/isn't allowed on localhost/);
+  });
+
   it("returns E_SITE_NOT_ALLOWED on a site the user hasn't allowed", async () => {
     await openTab(`http://localhost:${fixtures.port}/plain-form.html`);
     const r = await call("browser_snapshot");

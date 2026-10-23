@@ -77,6 +77,17 @@ https://github.com/dougmolineux/tabwright/issues
 
 **This add-on requires payment, non-free services or software, or additional hardware:** tick it. Claude Code needs an Anthropic account, which can be paid, and the add-on needs the companion program. The offline modes work without Claude, so this is a judgment call; ticking it is the transparent choice.
 
+## Screenshots
+
+Upload these from `docs/screenshots/` (1280×800), with these captions:
+
+| File | Caption |
+|---|---|
+| `approval.png` | Anything that submits, sends, pays or deletes waits for your click, in a prompt the page can't fake. |
+| `instruction-mode.png` | Run it from the sidebar: Claude fills what it knows and asks you about the rest. |
+
+To refresh them, drive the fixture pages (`npm run fixtures`) at a 1280×800 window size.
+
 ## Notes for reviewers
 
 ```
