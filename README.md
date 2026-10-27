@@ -117,6 +117,16 @@ To remove it, run `scripts/uninstall.sh`. Add `--purge` to also delete your conf
 
 > If you fork this project, change the add-on ID in `extension/manifest.json` (`browser_specific_settings.gecko.id`), in `scripts/install.sh` and in `test/e2e/firefox.test.ts`. AMO won't sign the same ID for two different developers.
 
+### 3. Add the Claude Code skill (optional)
+
+[`claude-skill/`](claude-skill/) is a Claude Code skill that teaches Claude how to use these tools well: the snapshot → act → verify loop, form-filling, the approval gate and the error codes. Link it into your skills folder:
+
+```sh
+ln -s "$(pwd)/claude-skill" ~/.claude/skills/tabwright
+```
+
+See [claude-skill/README.md](claude-skill/README.md) for details.
+
 ## Use
 
 1. Click the toolbar button, then **Connect**.
@@ -312,6 +322,7 @@ shared/             protocol (used by everything) and Node helpers (config, toke
 fm-helper/          Swift helper for Apple's on-device model
 scripts/            build, install, uninstall, example profile
 test/               unit, integration and e2e suites, and HTML fixtures
+claude-skill/       optional Claude Code skill for the browser_* tools
 docs/               logo, addons.mozilla.org listing text
 ```
 
