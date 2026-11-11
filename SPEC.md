@@ -83,7 +83,7 @@ Manifest V3. Firefox 140 or later is required: 128 added `scripting.executeScrip
       "strict_min_version": "140.0"
     }
   },
-  "permissions": ["nativeMessaging", "tabs", "scripting", "storage", "notifications"],
+  "permissions": ["nativeMessaging", "tabs", "scripting", "storage", "notifications", "activeTab", "clipboardWrite"],
   "optional_host_permissions": ["<all_urls>"],
   "background": { "scripts": ["background.js"], "type": "module" },
   "action": { "default_popup": "popup/popup.html", "default_title": "Tabwright" },
@@ -161,7 +161,7 @@ All actions first scroll the element into view (`scrollIntoView({ block: "center
 
 | Action | Implementation |
 |---|---|
-| Click | Dispatch `pointerdown`, `mousedown`, `pointerup`, `mouseup`, `click` at the element's center coordinates, then call `focus()`. |
+| Click | Dispatch `pointerdown`, `mousedown`, `pointerup`, `mouseup`, `click` at the element's center coordinates, then call `focus()`. Clipboard capture is armed around the click (below). |
 | Type | Focus, optionally clear, then set the value with the native setter in the main world: `Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(el, text)`, then dispatch `input` and `change` (bubbling). This is what makes React and Vue notice the change. For `contenteditable`, use `document.execCommand("insertText")`. Optional `perKey: true` dispatches `keydown`/`keypress`/`keyup` per character for sites that listen to keys. |
 | Select (native `<select>`) | Set `selected` on matching option(s) by value or visible text, dispatch `input` and `change`. |
 | Select (custom combobox) | Click to open, wait for a `role="listbox"` or `role="option"` to appear, type to filter if it's an input, click the option whose text matches. Return the chosen option's text. |
@@ -169,6 +169,8 @@ All actions first scroll the element into view (`scrollIntoView({ block: "center
 | Upload file | Build a `File` from the bytes sent by the MCP server, put it in a `DataTransfer`, assign `input.files = dt.files`, dispatch `input` and `change`. For drop zones without a reachable `<input type=file>`, dispatch `dragenter`, `dragover` and `drop` with the same `DataTransfer`. |
 | Press key | Dispatch keyboard events on the focused element. Enter on a form field counts as consequential if it would submit a form. |
 | Scroll | `window.scrollBy` or `element.scrollIntoView`. |
+
+Clipboard capture: a synthetic click carries no user activation, so Firefox rejects the page's `navigator.clipboard.writeText`/`write` and fails `document.execCommand("copy")`. Copy buttons (share links, affiliate links, API keys) would report an error. Around each click, a main-world helper (`mainClipboardArm`/`mainClipboardTake`) patches those three methods for that document. While armed they record the text the page tries to copy (`text/plain` for `write`; for `execCommand`, data a `copy` handler sets or else the selection) and report success to the page. Outside a click they pass straight through, so the user's own copies are untouched. Arming ends when the click settles (at most 10 s). The background script writes the captured text with the `clipboardWrite` permission, logs and audits its length (never the text), and returns it as `copiedText` with `clipboardWritten`. Text over 100,000 characters isn't copied. A page can already put any text on the clipboard when the user clicks it; this gives it the same ability when Claude clicks, and the activity log shows every such write.
 
 Known limitation: events created by scripts have `isTrusted === false`. Most sites don't check, but some do (often payment and anti-bot widgets). Firefox gives extensions no equivalent of Chrome's `debugger` API for trusted input. When an action has no visible effect, the agent should report it and ask the user to do that step by hand.
 
@@ -291,7 +293,7 @@ Every tool that acts on a page takes an optional `tabId`. If omitted, it uses th
 | `browser_snapshot` | `root?` (ref), `includeText?` (default true) | Snapshot text (section 6.1). |
 | `browser_screenshot` | `ref?`, `fullPage?` (v2) | JPEG image content. |
 | `browser_get_text` | `ref?` | Readable text of the page or element, up to 50,000 characters. |
-| `browser_click` | `ref` or `target` | `{ ok, navigated, snapshotStale }`, or an approval error. |
+| `browser_click` | `ref` or `target` | `{ ok, navigated, snapshotStale }`, plus `copiedText` and `clipboardWritten` if the page copied text, or an approval error. |
 | `browser_type` | `ref`, `text`, `clear?` (default true), `perKey?` | `{ ok, value }` (value read back from the field). |
 | `browser_select` | `ref`, `option` (text or value), or `options[]` for multi-select | `{ ok, selected }` |
 | `browser_check` | `ref`, `checked` | `{ ok, checked }` |

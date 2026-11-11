@@ -1,8 +1,14 @@
 // Loads the real content scripts into jsdom with a stub `browser`, the way test/unit/content.test.js does, and
 // fills in the browser APIs jsdom lacks. Import it from a test file that runs in the jsdom environment.
-import { mainSelectOptions, mainSetValue, mainUpload } from "../../extension/content/main-world-setter.js";
+import { mainClipboardArm, mainClipboardTake, mainSelectOptions, mainSetValue, mainUpload } from "../../extension/content/main-world-setter.js";
 
-export const MAIN = { setValue: mainSetValue, selectOptions: mainSelectOptions, upload: mainUpload };
+export const MAIN = {
+  setValue: mainSetValue,
+  selectOptions: mainSelectOptions,
+  upload: mainUpload,
+  clipboardArm: mainClipboardArm,
+  clipboardTake: mainClipboardTake,
+};
 
 /** Messages the content scripts sent to the background script (other than main-world calls). */
 export const sentToBackground = [];
@@ -72,6 +78,18 @@ if (!globalThis.DataTransfer) {
       this.items = { add: (f) => files.push(f), get length() { return files.length; } };
     }
   };
+}
+// ...or an async clipboard. Like Firefox after a synthetic click: writes fail for lack of user activation.
+/** Texts that reached the stub clipboard's writeText (i.e. weren't captured by Tabwright). */
+export const clipboardWrites = [];
+if (!globalThis.Clipboard) {
+  globalThis.Clipboard = class Clipboard {
+    writeText(text) {
+      clipboardWrites.push(text);
+      return Promise.reject(new DOMException("Clipboard write was blocked due to lack of user activation.", "NotAllowedError"));
+    }
+  };
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: new globalThis.Clipboard() });
 }
 if (!globalThis.DragEvent) {
   globalThis.DragEvent = class DragEvent extends MouseEvent {

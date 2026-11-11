@@ -7,6 +7,7 @@
 //   npm run test:e2e
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -339,6 +340,33 @@ describe("Firefox end to end", () => {
     expect(snap).toMatch(/textbox "Password" \[ref=e\d+\] \[type=password\] value=\[redacted\]/);
     // Acting inside the cross-origin frame works through its ref.
     await ok("browser_type", { ref: refIn(snap, /"Username"/), text: "doug" });
+  });
+
+  it("makes Copy buttons work: returns the copied text and puts it on the clipboard", async () => {
+    // Synthetic clicks have no user activation, so without the capture every button here reports failure.
+    await openTab(`${base}/copy.html`);
+    const snap = await ok("browser_snapshot");
+    const click = async (name: RegExp) => JSON.parse((await ok("browser_click", { ref: refIn(snap, name) })).replace(/^<page_content[^>]*>\n|\n<\/page_content>$/g, ""));
+    const status = async () => driver.findElement(By.id("status")).getText();
+    // The OS clipboard is only checked on macOS (pbpaste) with a visible Firefox; headless Firefox keeps an
+    // in-memory clipboard of its own.
+    const checkPasteboard = process.platform === "darwin" && !process.env.E2E_HEADLESS;
+    const pasteboard = () => execFileSync("pbpaste").toString();
+
+    for (const [button, text, shown] of [
+      [/"Copy with writeText"/, "https://example.test/write-text", "Copied https://example.test/write-text"],
+      [/"Copy after fetching"/, "https://example.test/delayed", "Copied https://example.test/delayed"],
+      [/"Copy with execCommand"/, "https://example.test/exec-command", "Copied with execCommand"],
+    ] as const) {
+      const res = await click(button);
+      expect(res, String(button)).toMatchObject({ ok: true, copiedText: text, clipboardWritten: true });
+      expect(await status()).toBe(shown);
+      if (checkPasteboard) expect(pasteboard()).toBe(text);
+    }
+
+    const plain = await click(/"Copy nothing"/);
+    expect(plain.copiedText).toBeUndefined();
+    expect(await status()).toBe("Nothing to copy");
   });
 
   it("walks open shadow roots and reports closed ones as opaque", async () => {

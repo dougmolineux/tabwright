@@ -119,3 +119,87 @@ export function mainUpload(nonce, file) {
   el.dispatchEvent(new DragEvent("drop", init));
   return { ok: true, fileName: f.name, size: f.size, dropped: true };
 }
+
+/**
+ * Arms clipboard capture around one browser_click (SPEC 6.4). Synthetic clicks carry no user activation,
+ * so Firefox rejects a page's navigator.clipboard.writeText/write and makes execCommand("copy") fail, and
+ * "Copy" buttons break. While armed, the patched methods record the text the page tries to copy and tell
+ * the page it worked; the background script then writes that text with the add-on's clipboardWrite
+ * permission. The patch is installed once per document and passes straight through when not armed, so
+ * the user's own copies are untouched. armMs bounds how long one click keeps it armed.
+ */
+export function mainClipboardArm(_nonce, opts) {
+  const KEY = Symbol.for("tabwright.clipboard");
+  let trap = window[KEY];
+  if (!trap) {
+    trap = { armedUntil: 0, text: null, pending: [] };
+    Object.defineProperty(window, KEY, { value: trap });
+    const armed = () => Date.now() < trap.armedUntil;
+    const record = (t) => {
+      if (typeof t === "string") trap.text = t;
+    };
+    const C = globalThis.Clipboard?.prototype;
+    const writeText = C?.writeText;
+    if (writeText) {
+      C.writeText = function (text) {
+        if (!armed()) return writeText.apply(this, arguments);
+        record(String(text));
+        return Promise.resolve();
+      };
+    }
+    const write = C?.write;
+    if (write) {
+      C.write = function (items) {
+        if (!armed()) return write.apply(this, arguments);
+        const p = (async () => {
+          for (const item of items ?? []) {
+            if (!item?.types?.includes("text/plain")) continue;
+            const data = await item.getType("text/plain");
+            record(typeof data === "string" ? data : await data.text());
+            return;
+          }
+        })();
+        trap.pending.push(p.catch(() => {}));
+        return p.then(() => undefined);
+      };
+    }
+    const exec = Document.prototype.execCommand;
+    Document.prototype.execCommand = function (cmd) {
+      if (!armed() || String(cmd).toLowerCase() !== "copy") return exec.apply(this, arguments);
+      // Pages copy either by selecting text (often a hidden textarea) or by filling clipboardData in a copy
+      // handler. Fire the copy event so a handler can set its data, else take the selection.
+      const active = this.activeElement;
+      let dt = null;
+      try {
+        dt = new DataTransfer();
+      } catch {}
+      const ev = new ClipboardEvent("copy", { bubbles: true, cancelable: true, composed: true, clipboardData: dt });
+      (active ?? this.documentElement).dispatchEvent(ev);
+      const set = ev.defaultPrevented ? (ev.clipboardData ?? dt)?.getData("text/plain") : "";
+      if (set) record(set);
+      else if (active && typeof active.selectionStart === "number" && /^(textarea|input)$/i.test(active.tagName)) {
+        record(active.value.slice(active.selectionStart, active.selectionEnd ?? active.value.length));
+      } else record(String(this.defaultView?.getSelection?.() ?? ""));
+      return true;
+    };
+  }
+  trap.text = null;
+  trap.pending = [];
+  trap.armedUntil = Date.now() + (Number(opts?.armMs) || 10_000);
+  return { ok: true };
+}
+
+/** Disarms clipboard capture and returns what the page copied since mainClipboardArm, or null. */
+export async function mainClipboardTake() {
+  const trap = window[Symbol.for("tabwright.clipboard")];
+  if (!trap) return { ok: true, text: null };
+  // A ClipboardItem's text arrives asynchronously; give it a moment, but never hang the click.
+  if (trap.text === null && trap.pending.length) {
+    await Promise.race([Promise.all(trap.pending), new Promise((r) => setTimeout(r, 1000))]);
+  }
+  const text = trap.text;
+  trap.armedUntil = 0;
+  trap.text = null;
+  trap.pending = [];
+  return { ok: true, text };
+}

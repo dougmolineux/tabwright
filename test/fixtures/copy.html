@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Copy buttons</title></head>
+<body>
+  <h1>Copy buttons</h1>
+  <!-- Each button reports success or failure in #status, like SiteStripe's "Copy affiliate link". -->
+  <p><button type="button" id="writeText">Copy with writeText</button></p>
+  <p><button type="button" id="delayed">Copy after fetching</button></p>
+  <p><button type="button" id="execCommand">Copy with execCommand</button></p>
+  <p><button type="button" id="nothing">Copy nothing</button></p>
+  <p id="status"></p>
+  <script>
+    const status = (s) => (document.getElementById("status").textContent = s);
+    const copy = (text) => navigator.clipboard.writeText(text).then(() => status("Copied " + text), (e) => status("Unable to copy: " + e.name));
+    document.getElementById("writeText").onclick = () => copy("https://example.test/write-text");
+    // A short link that has to be fetched first, with no DOM change until the copy finishes.
+    document.getElementById("delayed").onclick = () => setTimeout(() => copy("https://example.test/delayed"), 150);
+    document.getElementById("execCommand").onclick = () => {
+      const ta = document.createElement("textarea");
+      ta.value = "https://example.test/exec-command";
+      document.body.append(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      status(ok ? "Copied with execCommand" : "Unable to copy with execCommand");
+    };
+    document.getElementById("nothing").onclick = () => status("Nothing to copy");
+  </script>
+</body></html>

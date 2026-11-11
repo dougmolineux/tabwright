@@ -1,12 +1,19 @@
 // Background script (SPEC 5.2): owns the native messaging port, routes requests to tabs, enforces the
 // site allowlist and the approval gate, shows the badge and tab indicator, and keeps the activity log.
 import { Reassembler, chunkMessage, validateMessage } from "./lib/protocol.js";
-import { mainSelectOptions, mainSetValue, mainUpload } from "./content/main-world-setter.js";
+import { mainClipboardArm, mainClipboardTake, mainSelectOptions, mainSetValue, mainUpload } from "./content/main-world-setter.js";
 
 const HOST_NAME = "tabwright";
 const CONTENT_FILES = ["content/common.js", "content/refs.js", "content/snapshot.js", "content/approval.js", "content/actions.js"];
 const BLOCKED_HOSTS = new Set(["addons.mozilla.org", "accounts.firefox.com", "support.mozilla.org"]);
-const MAIN_FUNCS = { setValue: mainSetValue, selectOptions: mainSelectOptions, upload: mainUpload };
+const MAIN_FUNCS = {
+  setValue: mainSetValue,
+  selectOptions: mainSelectOptions,
+  upload: mainUpload,
+  clipboardArm: mainClipboardArm,
+  clipboardTake: mainClipboardTake,
+};
+const COPY_MAX = 100_000; // longest page copy written to the clipboard and returned to the agent
 const AUDIT_MAX = 500;
 const CONTROL_IDLE_MS = 20_000;
 const COLORS = { off: "#8a8a8a", on: "#2e9e4f", busy: "#e8833a", error: "#c0392b" };
@@ -661,6 +668,27 @@ async function logged(ctx, action, target, fn, describe, auditDetail) {
   }
 }
 
+/**
+ * Writes text a page tried to copy during a click (SPEC 6.4). The page's own write failed for lack of user
+ * activation; the clipboardWrite permission lets the add-on do it. Logged, since it changes the clipboard.
+ */
+async function copyForPage(ctx, text) {
+  if (text.length > COPY_MAX) {
+    addLog(`The page tried to copy ${text.length} characters; not copied (limit ${COPY_MAX})`, "error");
+    return { copiedText: undefined, clipboardNote: `The page tried to copy ${text.length} characters, more than the ${COPY_MAX} limit; the clipboard wasn't changed.` };
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (err) {
+    addLog(`Couldn't write the page's copy to the clipboard: ${err.message}`, "error");
+    return { clipboardWritten: false };
+  }
+  // Length only, like typed text: Copy buttons often hold API keys and tokens.
+  addLog(`Copied ${text.length} characters to the clipboard`);
+  audit({ url: ctx.tab.url, action: "copy", target: "clipboard", result: "ok", approved: null, detail: `${text.length} characters` });
+  return { clipboardWritten: true };
+}
+
 function withOrigin(ctx, res) {
   const { nextRef, newRefs, ...rest } = res ?? {};
   return { ...rest, origin: ctx.origin };
@@ -857,6 +885,7 @@ const METHODS = {
     const { frameId, ref } = await resolveTarget(ctx, p);
     const res = await logged(ctx, "click", ref, () => gatedAction(ctx, frameId, { cmd: "click", ref }, p, entry), (r) => `Clicked ${short(r.target ?? ref, 60)}`);
     if (res.blockedSubmit) notify("blocked", "Submission blocked", "A form submission without your approval was blocked.");
+    if (typeof res.copiedText === "string") Object.assign(res, await copyForPage(ctx, res.copiedText));
     return withOrigin(ctx, res);
   },
 

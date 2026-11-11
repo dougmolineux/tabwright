@@ -101,8 +101,9 @@ The add-on is plain JavaScript with no bundler, except extension/lib/protocol.js
 PERMISSIONS
 - nativeMessaging: the only channel to the local host ("tabwright").
 - optional_host_permissions <all_urls>: never requested at install. The popup requests one site at a time when the user clicks "Allow Claude on this site"; no site is allowed by default. addons.mozilla.org, accounts.firefox.com and support.mozilla.org are always refused, as are non-http(s) pages.
-- scripting: injects the content scripts (extension/content/) into allowed sites only. It also uses world: "MAIN" to call three small fixed functions (extension/content/main-world-setter.js) that set form values the way React/Vue expect. No strings are evaluated.
+- scripting: injects the content scripts (extension/content/) into allowed sites only. It also uses world: "MAIN" to call five small fixed functions (extension/content/main-world-setter.js) that set form values the way React/Vue expect and capture what a Copy button copies during a click. No strings are evaluated.
 - tabs, activeTab: list and focus tabs; activeTab is needed for screenshots.
+- clipboardWrite: when Claude clicks a page's Copy button, the page's own clipboard write fails (a script click carries no user activation). The add-on captures the text the page tried to copy, only during that click, and writes it with this permission (background.js copyForPage). It never reads the clipboard. Each write is shown in the activity log.
 - storage, notifications: activity log and settings; approval and question notifications.
 
 DATA COLLECTION

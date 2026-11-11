@@ -110,6 +110,13 @@
     }
   };
 
+  /** Runs a main-world function that works on the whole document rather than one element. */
+  CB.runMainDoc = async (fn, args) => {
+    const r = await browser.runtime.sendMessage({ type: "main", fn, nonce: null, args });
+    if (!r || r.ok === false) CB.fail("E_INTERNAL", `main-world ${fn} failed: ${r?.error ?? "no result"}`);
+    return r;
+  };
+
   function deepActiveElement() {
     let el = document.activeElement;
     while (el && el.shadowRoot && el.shadowRoot.activeElement) el = el.shadowRoot.activeElement;
@@ -167,10 +174,18 @@
     if (c.consequential && !msg.approved) return approvalNeeded("click", c.name || name, c.reason, msg.noApproval);
     markAgentAction(msg.approved);
     CB.blockedSubmit = false;
+    // Capture anything the page copies in response (SPEC 6.4). If arming fails, click anyway.
+    const armed = await CB.runMainDoc("clipboardArm", {}).then(() => true, () => false);
     const settled = CB.settle();
     CB.clickEl(el);
     const s = await settled;
-    return { ok: true, target: name, navigated: s.navigated, snapshotStale: s.mutated || s.navigated, ...(CB.blockedSubmit ? { blockedSubmit: true } : {}) };
+    let copiedText = null;
+    if (armed && !s.navigated) copiedText = (await CB.runMainDoc("clipboardTake").catch(() => null))?.text ?? null;
+    return {
+      ok: true, target: name, navigated: s.navigated, snapshotStale: s.mutated || s.navigated,
+      ...(CB.blockedSubmit ? { blockedSubmit: true } : {}),
+      ...(copiedText ? { copiedText } : {}),
+    };
   }
 
   async function type(msg) {

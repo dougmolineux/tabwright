@@ -20,7 +20,9 @@ export function registerActionTools(ctx: ToolContext): void {
     {
       description:
         "Click an element. Clicks that would submit, send, pay, delete and similar ([consequential] in the snapshot) " +
-        "pause for the user's approval in the browser and return E_APPROVAL_DENIED or E_APPROVAL_TIMEOUT if not approved.",
+        "pause for the user's approval in the browser and return E_APPROVAL_DENIED or E_APPROVAL_TIMEOUT if not approved. " +
+        "If the click makes the page copy text (a Copy button), the result has it as copiedText and Tabwright puts it " +
+        "on the clipboard (clipboardWritten).",
       inputSchema: { tabId: tabIdSchema, ref: refSchema.optional(), target: targetSchema },
     },
     handle(async (args) => {

@@ -3,7 +3,7 @@
 // interactability errors, custom dropdowns, checkboxes, uploads, keys, scrolling, waiting, text and the
 // submit backstop.
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { cmd, loadContentScripts, mainCalls, page, raw, refIn, scrollCalls, sentToBackground } from "../helpers/content-env.js";
+import { clipboardWrites, cmd, loadContentScripts, mainCalls, page, raw, refIn, scrollCalls, sentToBackground } from "../helpers/content-env.js";
 
 let CB;
 let submits = 0;
@@ -71,6 +71,34 @@ describe("click", () => {
     expect(seen).toEqual(["pointerdown", "mousedown", "pointerup", "mouseup", "click"]);
     expect(res).toEqual({ ok: true, target: "Add", navigated: false, snapshotStale: true });
     expect(document.activeElement).toBe(btn);
+  });
+
+  it("returns what a Copy button copies, even though the synthetic click has no user activation", async () => {
+    const { text } = await page('<button type="button">Copy link</button><span id="msg"></span>');
+    document.querySelector("button").addEventListener("click", async () => {
+      const msg = document.getElementById("msg");
+      try {
+        await navigator.clipboard.writeText("https://example.com/s/abc");
+        msg.textContent = "Copied!";
+      } catch {
+        msg.textContent = "Unable to copy";
+      }
+    });
+    const before = clipboardWrites.length;
+    const res = await cmd("click", { ref: refIn(text, /"Copy link"/) });
+    expect(res).toMatchObject({ ok: true, copiedText: "https://example.com/s/abc" });
+    expect(document.getElementById("msg").textContent).toBe("Copied!");
+    expect(clipboardWrites.length).toBe(before); // captured, not passed to the page's blocked clipboard
+    expect(mainCalls.slice(-2).map((c) => c.fn)).toEqual(["clipboardArm", "clipboardTake"]);
+
+    // Disarmed after the click: the page's own later writes go to the real clipboard as usual.
+    await expect(navigator.clipboard.writeText("later")).rejects.toThrow(/user activation/);
+    expect(clipboardWrites.at(-1)).toBe("later");
+  });
+
+  it("adds no copiedText when the click copies nothing", async () => {
+    const { text } = await page('<button type="button">Plain</button>');
+    expect(await cmd("click", { ref: refIn(text, /"Plain"/) })).toEqual({ ok: true, target: "Plain", navigated: false, snapshotStale: false });
   });
 
   it("reports a navigation when the page starts to unload", async () => {

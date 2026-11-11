@@ -35,6 +35,8 @@ In **instruction mode** (the sidebar), the engine determines where data goes:
 - **On-device:** labels and short questions go to Apple's on-device Foundation Models, which run locally. Nothing leaves your computer.
 - **Rules:** everything is processed locally.
 
+**Copy buttons:** when Claude clicks a button that copies text, the copied text is returned to Claude like other page content and written to your clipboard. Tabwright never reads your clipboard. The activity log records only the length.
+
 **Uploads:** when Claude uploads a file to a page (`browser_upload`), the MCP server reads the file from a folder you allowed (`allowedUploadDirs`, default `~/Documents`) and passes its contents to the page through the extension. The file's contents aren't sent to Claude; Claude sees only the file's name and size.
 
 ## What is stored, and where

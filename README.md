@@ -157,7 +157,7 @@ All tools accept an optional `tabId`; without it they act on the selected tab, o
 | `browser_snapshot` | Text outline of the page with refs, current values and `[consequential]` markers. Use `root` to zoom into a section. |
 | `browser_screenshot` | JPEG of the viewport, or of one element. |
 | `browser_get_text` | Readable text of the page or an element (up to 50,000 characters). |
-| `browser_click` | Click an element. Consequential clicks wait for approval. |
+| `browser_click` | Click an element. Consequential clicks wait for approval. If the page copies text (a Copy button), it's returned and put on your clipboard. |
 | `browser_type` | Type into a field and read the value back. Use `clear=false` to append and `perKey` for key-by-key input. |
 | `browser_select` | Pick an option in a `<select>` or custom combobox by text or value, or several with `options`. |
 | `browser_check` | Set a checkbox, switch or radio to checked or unchecked. |
@@ -328,7 +328,7 @@ docs/               logo, addons.mozilla.org listing text
 
 ## Known limitations
 
-- **Script events aren't trusted.** They have `isTrusted === false`, so some payment and anti-bot widgets ignore them.
+- **Script events aren't trusted.** They have `isTrusted === false`, so some payment and anti-bot widgets ignore them. Copy buttons are the exception: Tabwright captures what they copy (see `browser_click`). A page that copies more than about a second after the click has settled is missed.
 - **`fetch`-only submissions can slip through.** The submit backstop catches `submit` events. A page that sends data with `fetch` from a click handler is only gated if the clicked button itself is classified as consequential.
 - **The keyword list only covers buttons, links and menu items.** An "I agree…" checkbox can be ticked without a prompt.
 - **Site matching ignores the port.** Allowing `localhost` allows every port on it.

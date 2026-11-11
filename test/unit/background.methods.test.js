@@ -323,6 +323,38 @@ describe("actions", () => {
     expect(await b.host.call("click", { ref: "e1" })).toEqual({ ok: true, navigated: true, snapshotStale: true, url: `${SITE}/next`, origin: ORIGIN });
   });
 
+  it("writes what the page copied during a click to the clipboard, and logs it", async () => {
+    const b = await page();
+    const writes = [];
+    vi.stubGlobal("navigator", { clipboard: { writeText: async (t) => void writes.push(t) } });
+    b.pages.on(1, "click", () => ({ ok: true, target: "Copy affiliate link", navigated: false, copiedText: "https://amzn.to/abc" }));
+    expect(await b.host.call("click", { ref: "e1" })).toEqual({
+      ok: true, target: "Copy affiliate link", navigated: false, copiedText: "https://amzn.to/abc", clipboardWritten: true, origin: ORIGIN,
+    });
+    expect(writes).toEqual(["https://amzn.to/abc"]);
+    expect(audits(b).at(-1)).toMatchObject({ action: "copy", target: "clipboard", result: "ok", detail: "19 characters" });
+    expect((await b.state()).log.at(-1)).toMatchObject({ text: "Copied 19 characters to the clipboard" }); // never the text itself
+  });
+
+  it("still returns the copied text when the clipboard write fails", async () => {
+    const b = await page();
+    vi.stubGlobal("navigator", { clipboard: { writeText: async () => Promise.reject(new Error("denied")) } });
+    b.pages.on(1, "click", () => ({ ok: true, target: "Copy", copiedText: "abc" }));
+    expect(await b.host.call("click", { ref: "e1" })).toMatchObject({ copiedText: "abc", clipboardWritten: false });
+    expect((await b.state()).log.at(-1)).toMatchObject({ kind: "error", text: "Couldn't write the page's copy to the clipboard: denied" });
+  });
+
+  it("refuses to copy very long text", async () => {
+    const b = await page();
+    const writes = [];
+    vi.stubGlobal("navigator", { clipboard: { writeText: async (t) => void writes.push(t) } });
+    b.pages.on(1, "click", () => ({ ok: true, target: "Copy", copiedText: "x".repeat(100_001) }));
+    const res = await b.host.call("click", { ref: "e1" });
+    expect(res.copiedText).toBeUndefined();
+    expect(res.clipboardNote).toMatch(/100001 characters, more than the 100000 limit/);
+    expect(writes).toEqual([]);
+  });
+
   it("waits for a navigation the click started before returning", async () => {
     const b = await page();
     b.pages.on(1, "click", () => {

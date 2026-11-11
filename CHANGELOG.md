@@ -11,6 +11,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- **Copy buttons work.** A synthetic click has no user activation, so pages' clipboard writes failed (for example SiteStripe's "Copy affiliate link" said it couldn't make the link). `browser_click` now captures text the page copies with `navigator.clipboard.writeText`, `navigator.clipboard.write` or `execCommand("copy")`, writes it to the clipboard, and returns it as `copiedText`. This needs the new `clipboardWrite` permission. Each write appears in the activity log.
 - Project logo, new toolbar icon, and screenshots in `docs/screenshots/`.
 - `data_collection_permissions` in the manifest, declaring the page content, page activity, browsing activity and personal information the add-on passes to Claude Code.
 - `PRIVACY.md`, the addons.mozilla.org listing text in `docs/amo-listing.md`, and `npm run ext:package` to build the add-on and source zips for submission.
