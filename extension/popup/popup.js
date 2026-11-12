@@ -66,6 +66,8 @@ function renderState(s) {
   const btn = $("connectBtn");
   btn.textContent = s.connected || s.connecting ? "Disconnect" : "Connect";
   btn.dataset.action = s.connected || s.connecting ? "disconnect" : "connect";
+  // Stop cancels work and disconnects, so there is nothing to stop once disconnected.
+  $("stopBtn").disabled = !(s.connected || s.connecting);
   $("autoApprove").checked = s.autoApprove === true;
   $("approvalsSec").hidden = !s.approvals.length;
   const ul = $("approvals");
