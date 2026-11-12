@@ -42,6 +42,24 @@ else
   [[ "$latest" != "$XPI" ]] && mv "$latest" "$XPI"
 fi
 
+# Publish the signed build so Firefox can self-update: a GitHub release holds the .xpi and
+# updates.json (served from main via raw.githubusercontent.com, the manifest's update_url) points at it.
+if command -v gh >/dev/null 2>&1; then
+  TAG="v$VERSION"
+  if ! gh release view "$TAG" >/dev/null 2>&1; then
+    gh release create "$TAG" "$XPI" --title "Tabwright $VERSION" --notes "Signed unlisted build of Tabwright $VERSION."
+  fi
+  REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+  node scripts/update-manifest.mjs "$VERSION" "https://github.com/$REPO/releases/download/$TAG/tabwright-$VERSION.xpi" "$XPI"
+  if ! git diff --quiet -- updates.json; then
+    git add updates.json
+    git commit -q -m "Publish Tabwright $VERSION to updates.json"
+    git push -q origin HEAD
+  fi
+else
+  echo "gh not found: skipping the GitHub release, so Firefox won't auto-update to $VERSION."
+fi
+
 echo "Opening $XPI in Firefox. Click Add (it asks for the new clipboard permission)."
 open -a Firefox "$XPI"
 echo

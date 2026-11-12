@@ -25,7 +25,12 @@ git diff --exit-code -- extension/lib/protocol.js || {
 npm run ext:lint
 
 mkdir -p "$OUT"
-npx web-ext build --source-dir extension --artifacts-dir "$OUT" --filename "tabwright-$VERSION.zip" --ignore-files package.json --overwrite-dest
+# AMO rejects add-ons that set update_url (it hosts the updates itself), so build from a copy without it.
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+cp -R extension "$STAGE/extension"
+node -e 'const f=process.argv[1],m=JSON.parse(require("fs").readFileSync(f));delete m.browser_specific_settings.gecko.update_url;require("fs").writeFileSync(f,JSON.stringify(m,null,2)+"\n")' "$STAGE/extension/manifest.json"
+npx web-ext build --source-dir "$STAGE/extension" --artifacts-dir "$OUT" --filename "tabwright-$VERSION.zip" --ignore-files package.json --overwrite-dest
 git archive --format=zip --prefix="tabwright-$VERSION/" -o "$OUT/tabwright-$VERSION-source.zip" HEAD
 
 echo
